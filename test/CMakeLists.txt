@@ -1,4 +1,4 @@
-SET(TEST_FILES test_buffer.c test_dsp.c test_math.c)
+SET(TEST_FILES test_buffer.c test_dsp.c test_math.c test_io.c)
   
 
 add_executable(run_tests EXCLUDE_FROM_ALL test_main.c test_common.c ${TEST_FILES})

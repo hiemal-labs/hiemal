@@ -19,6 +19,10 @@ TEST(shift_down_64);
 TEST(shift_up_64);
 TEST(fir_filter);
 TEST(dct_type_II);
+TEST(src_fd);
+TEST(sink_fd);
+TEST(src_file);
+TEST(sink_file);
 TEST(math_blas_ddot);
 
 struct _test_info {
@@ -59,10 +63,10 @@ int print_results_json(char *filename, const testing_results_t *results) {
 
 int main() {
   testing_results_t results;
-  results.n_tests = 11;
+  results.n_tests = 15;
   results.tests = (test_info_t*)malloc(results.n_tests*sizeof(test_info_t));
-  int (*test_list[])() = {test_ring_buffer_init, test_buffer_delete, test_rbuf_reset, test_rbuf_rw_arithmetic, test_rbuf_write, test_rbuf_read, test_shift_down_64, test_shift_up_64, test_fir_filter, test_dct_type_II, test_math_blas_ddot};
-  char *test_names[] = {"ring_buffer_init", "buffer_delete", "rbuf_reset", "rbuf_rw_arithmetic", "rbuf_write", "rbuf_read", "shift_down_64", "shift_up_64", "fir_filter", "dct_type_II", "math_blas_ddot"};
+  int (*test_list[])() = {test_ring_buffer_init, test_buffer_delete, test_rbuf_reset, test_rbuf_rw_arithmetic, test_rbuf_write, test_rbuf_read, test_shift_down_64, test_shift_up_64, test_fir_filter, test_dct_type_II, test_src_fd, test_sink_fd, test_src_file, test_sink_file, test_math_blas_ddot};
+  char *test_names[] = {"ring_buffer_init", "buffer_delete", "rbuf_reset", "rbuf_rw_arithmetic", "rbuf_write", "rbuf_read", "shift_down_64", "shift_up_64", "fir_filter", "dct_type_II", "src_fd", "sink_fd", "src_file", "sink_file", "math_blas_ddot"};
   int i, rc;
   unsigned int n_success = 0;
   printf("Running %d tests\n", results.n_tests);

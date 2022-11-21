@@ -10,6 +10,7 @@ Hiemal is a lightweight real-time audio processing C library.
    :maxdepth: 2
    
    buffer
+   io
    dsp
 
 .. toctree::
