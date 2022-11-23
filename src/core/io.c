@@ -37,7 +37,7 @@ int src_file(FILE *f, unsigned int n_bytes, void *buf) {
 }
 
 /*! \brief Sink (file) 
-* \param fname file name
+* \param f ``FILE*`` handle
 * \param n_bytes number of bytes to write to file
 * \param buf buffer address
 * \return exit code
