@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package hiemal;
+
+message buf_snapshot {
+  int32 rel_time = 1;
+  bytes raw_data = 2;
+}
+
+message buf_metadata {
+  float fs = 1;
+  uint32 bit_depth = 2;
+}
+
+message buffer {
+  buf_metadata metadata = 1;
+  repeated buf_snapshot buf_data = 2;
+}

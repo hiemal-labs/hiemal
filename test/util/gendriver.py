@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 
 import io
+import sys
 
 import glob
 import re
+import argparse
 
 #find all the tests in the test files
 # TODO: make sure that TEST() regex matches aren't commented out
-def discover_tests(file_glob="test*.c", exclude_files=["test_main.c", "test_common.c"], \
+def discover_tests(file_glob="test*.c", exclude_files=[], \
                    search_str="^TEST\(.*\)"):
   test_file_list = list(set(glob.glob(file_glob)) - set(exclude_files))
   test_file_list.sort()
@@ -47,5 +49,8 @@ def gen_test_driver(tests, in_file="test_main.c.in", out_file=None):
 
 # TODO: command-line arguments
 if __name__ == "__main__":
-  test_list = discover_tests()
+  parser = argparse.ArgumentParser(sys.argv[1:])
+  parser.add_argument('--exclude_files', nargs='*', default=list())
+  parsed_args = parser.parse_args()
+  test_list = discover_tests(exclude_files=parsed_args.exclude_files)
   gen_test_driver(test_list)
