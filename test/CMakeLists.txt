@@ -1,6 +1,15 @@
-SET(TEST_FILES test_buffer.c test_dsp.c test_math.c test_io.c test_async.c test_alsa.c test_pulse.c)
+SET(TEST_FILES test_buffer.c test_dsp.c test_math.c test_io.c test_async.c)
+
 if(WITH_PROTOBUF)
   list(APPEND TEST_FILES test_pb_c_wrap.c)
+endif()
+
+if(WITH_ALSA)
+  list(APPEND TEST_FILES test_alsa.c)
+endif()
+
+if(WITH_PULSEAUDIO)
+  list(APPEND TEST_FILES test_pulse.c)
 endif()
 
 set(GENDRIVER_EXCLUDED_FILES test_main.c test_common.c)

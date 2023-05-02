@@ -53,8 +53,9 @@ set(WITH_PULSEAUDIO "OFF" CACHE BOOL "Use PulseAudio")
 find_package (PulseAudio)
 if(NOT PulseAudio_FOUND)
   set(WITH_PULSEAUDIO "OFF")
-else()
-  message("** Linking with libpulse **")
+endif()
+
+if (WITH_PULSEAUDIO)
   target_link_libraries(hiemal pulse)
 endif()
 
