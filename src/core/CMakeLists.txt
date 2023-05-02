@@ -2,7 +2,6 @@
 target_include_directories(hiemal PUBLIC include)
 target_sources(hiemal PRIVATE 
   fmt.c 
-  playback.c 
   error.c 
   buffer.c 
   dsp.c 
