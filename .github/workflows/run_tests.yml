@@ -17,19 +17,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install cmake
-          sudo apt-get install alsa-base
-          sudo apt-get install libasound2-dev
-          sudo apt-get install alsa-utils
-          sudo apt-get install libpulse-dev
-          sudo apt-get install pulseaudio-utils
-          sudo modprobe snd
-          sudo systemctl status systemd-modules-load.service
-
-      - name: Get audio info
-        run: |
-          ls /proc/asound
-          aplay -L
-          pactl list cards
 
       - name: build
         run: |
