@@ -24,6 +24,7 @@ jobs:
 
       - name: Get audio info
         run: |
+          ls /proc/asound
           aplay -L
           pactl list cards
 
