@@ -2,14 +2,19 @@
 
 #include "intern/backend.h"
 #include "intern/device.h"
+
+#ifdef WITH_PULSEAUDIO
 #include "intern/pulse.h"
+#endif
 
 static const struct backend_info available_backends[] = {
+  #ifdef WITH_PULSEAUDIO
   {"PULSEAUDIO",
     hm_pulse_connection_init,
     hm_pulse_connection_close,
     hm_pulse_dump_info,
     hm_pulse_io_connect_by_id},
+    #endif
 };
 
 const struct backend_info *get_backend_by_name(char *name) {
