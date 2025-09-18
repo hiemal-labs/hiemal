@@ -12,13 +12,10 @@ typedef enum {PLAYBACK=0, RECORDING} hm_io_type_t;
 
 typedef int (device_io_fn)(hm_device_io_t*, buffer_t*, unsigned int);
 
+#define HM_DEVICE_HEAD char *name; hm_backend_t io_backend; void *backend_handle; int n_io_devices; hm_device_io_t **io_devices; unsigned int default_io_id;
+
 struct _hm_device {
-  char *name;
-  hm_backend_t io_backend;
-  void *backend_handle;
-  int n_io_devices;
-  hm_device_io_t **io_devices;
-  unsigned int default_io_id;
+  HM_DEVICE_HEAD
 };
 
 struct _hm_device_io {

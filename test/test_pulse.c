@@ -13,12 +13,16 @@ TEST(pulse_connection) {
   return TEST_SUCCESS;
 }
 
-// TODO: fix test failure/discrepancy when bluetooth audio devices
-// are connected
 TEST(pulse_n_cards) {
   hm_backend_connection_t *pulse_backend = NULL;
   hm_pulse_connection_init(&pulse_backend);
-  int n_cards_test = hm_pulse_n_cards(pulse_backend);
+  int n_cards_pulse = hm_pulse_n_cards(pulse_backend);
+  int n_cards_test = 0;
+  int i = 0;
+  // pulseaudio might have picked up devices not seen by alsa (e.g. bluetooth)
+  for (i = 0; i < n_cards_pulse; i++) {
+    if (strncmp(pulse_backend->devices[i]->name, "alsa", 4) == 0) n_cards_test++;
+  }
   // use alsa for ground truth
   int n_cards = hm_alsa_n_cards();
   hm_pulse_connection_close(&pulse_backend);

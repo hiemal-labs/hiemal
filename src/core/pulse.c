@@ -7,13 +7,18 @@
 #include <unistd.h>
 
 typedef struct {
+  HM_DEVICE_HEAD
+  int pulse_card_id;
+} hm_pulse_device_t;
+
+typedef struct {
   pa_threaded_mainloop *mainloop;
   pa_context *hm_context;
   pa_server_info *server_info;
 } hm_pulse_handle_t;
 
 typedef struct {
-  hm_device_t **dev;
+  hm_pulse_device_t **dev;
   int dev_i;
 } indexed_dev_handle;
 
@@ -40,6 +45,14 @@ int get_dev_io_id(struct hm_pulse_io_list *l, const char *name) {
   return -1;
 }
 
+int get_index_from_card_id(hm_pulse_device_t **cards, int card_id, int n_cards) {
+  int i = 0;
+  for (i = 0; i < n_cards; i++) {
+    if ((cards[i])->pulse_card_id == card_id) return i;
+  }
+  return -1;
+}
+
 int io_list_to_array(struct hm_pulse_io_list *l, hm_backend_connection_t *pulse_backend) {
   int n_cards = pulse_backend->n_devices;
   int *card_io_count = (int*)calloc(n_cards,sizeof(int));
@@ -56,9 +69,10 @@ int io_list_to_array(struct hm_pulse_io_list *l, hm_backend_connection_t *pulse_
   }
 
   node_itr = l->head;
-  hm_device_t *cur_device = NULL;
+  hm_pulse_device_t *cur_device = NULL;
   for (i = 0; i < l->n_items; i++) {
-    cur_device = (pulse_backend->devices)[node_itr->card_id];
+    int card_index = get_index_from_card_id((hm_pulse_device_t**)(pulse_backend->devices), node_itr->card_id, n_cards);
+    cur_device = (hm_pulse_device_t*)((pulse_backend->devices)[card_index]);
     (cur_device->io_devices)[cur_device->n_io_devices] = node_itr->io_device;
     cur_device->n_io_devices += 1;
     node_itr = node_itr->next;
@@ -81,10 +95,11 @@ void _hm_pulse_card_list_cb (pa_context *c, const pa_card_info *i, int eol, void
     return;
   }
   indexed_dev_handle *indexed_dev = (indexed_dev_handle*)userdata;
-  hm_device_t **dev = indexed_dev->dev + indexed_dev->dev_i;
-  *dev = (hm_device_t*)malloc(sizeof(hm_device_t));
+  hm_pulse_device_t **dev = indexed_dev->dev + indexed_dev->dev_i;
+  *dev = (hm_pulse_device_t*)calloc(sizeof(hm_pulse_device_t), 1);
   (*dev)->name = strdup(i->name);
   (*dev)->io_backend = PULSEAUDIO;
+  (*dev)->pulse_card_id = i->index;
   (indexed_dev->dev_i)++;
 }
 
@@ -165,9 +180,9 @@ int hm_pulse_connection_init(hm_backend_connection_t **pulse_backend) {
   (*pulse_backend)->backend_handle = (void*)pulse_handle;
   int n_cards = hm_pulse_n_cards(*pulse_backend);
   (*pulse_backend)->n_devices = n_cards;
-  (*pulse_backend)->devices = (hm_device_t**)malloc(n_cards*sizeof(hm_device_t*));
+  (*pulse_backend)->devices = (hm_device_t**)malloc(n_cards*sizeof(hm_pulse_device_t*));
   indexed_dev_handle dev_cb_handle;
-  dev_cb_handle.dev = (*pulse_backend)->devices;
+  dev_cb_handle.dev = (hm_pulse_device_t**)((*pulse_backend)->devices);
   dev_cb_handle.dev_i = 0;
   struct hm_pulse_io_list *list = (struct hm_pulse_io_list*)malloc(sizeof(struct hm_pulse_io_list));
   HM_LIST_INIT(list)
