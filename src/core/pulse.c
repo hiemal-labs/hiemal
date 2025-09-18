@@ -82,7 +82,10 @@ int io_list_to_array(struct hm_pulse_io_list *l, hm_backend_connection_t *pulse_
 }
 
 void _hm_pulse_context_state_cb(pa_context *c, void *userdata) {
-  return;
+  pa_threaded_mainloop *m = (pa_threaded_mainloop*)userdata;
+  pa_context_state_t state = pa_context_get_state(c);
+  if (state == PA_CONTEXT_READY || state == PA_CONTEXT_TERMINATED || state == PA_CONTEXT_FAILED)
+    pa_threaded_mainloop_signal(m, 0);
 }
 
 void _hm_pulse_server_info_cb(pa_context *c, const pa_server_info *i, void *userdata) {
@@ -166,10 +169,11 @@ int hm_pulse_connection_init(hm_backend_connection_t **pulse_backend) {
   pa_threaded_mainloop *m = pa_threaded_mainloop_new();
   pa_mainloop_api *m_api = pa_threaded_mainloop_get_api(m);
   pa_context *hm_pa_context = pa_context_new(m_api, "hiemal");
-  pa_threaded_mainloop_start(m);
-  pa_context_set_state_callback(hm_pa_context, _hm_pulse_context_state_cb, NULL);
+  pa_context_set_state_callback(hm_pa_context, _hm_pulse_context_state_cb, (void*)m);
   pa_context_connect(hm_pa_context, NULL, 0, NULL);
-  while(pa_context_get_state(hm_pa_context) != PA_CONTEXT_READY);
+  pa_threaded_mainloop_start(m);
+  while(pa_context_get_state(hm_pa_context) != PA_CONTEXT_READY)
+    pa_threaded_mainloop_wait(m);
   *pulse_backend = (hm_backend_connection_t*)malloc(sizeof(hm_backend_connection_t));
   hm_pulse_handle_t *pulse_handle = 
     (hm_pulse_handle_t*)malloc(sizeof(hm_pulse_handle_t));
