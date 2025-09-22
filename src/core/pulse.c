@@ -20,6 +20,7 @@ typedef struct {
 typedef struct {
   hm_pulse_device_t **dev;
   int dev_i;
+  hm_pulse_handle_t *pulse_handle;
 } indexed_dev_handle;
 
 struct hm_pulse_io_node {
@@ -30,6 +31,12 @@ struct hm_pulse_io_node {
 
 struct hm_pulse_io_list {
   HM_LIST_HEAD(struct hm_pulse_io_node)
+  hm_pulse_handle_t *pulse_handle;
+};
+
+struct int_with_handle {
+  int i;
+  hm_pulse_handle_t *pulse_handle;
 };
 
 int get_dev_io_id(struct hm_pulse_io_list *l, const char *name) {
@@ -90,14 +97,18 @@ void _hm_pulse_context_state_cb(pa_context *c, void *userdata) {
 
 void _hm_pulse_server_info_cb(pa_context *c, const pa_server_info *i, void *userdata) {
   hm_pulse_handle_t *hm_pulse = (hm_pulse_handle_t*)userdata;
+  pa_threaded_mainloop *m = hm_pulse->mainloop;
   hm_pulse->server_info = (pa_server_info*)i;
+  pa_threaded_mainloop_signal(m, 0);
 }
 
 void _hm_pulse_card_list_cb (pa_context *c, const pa_card_info *i, int eol, void *userdata) {
+  indexed_dev_handle *indexed_dev = (indexed_dev_handle*)userdata;
   if (eol > 0) {
+    pa_threaded_mainloop *m = indexed_dev->pulse_handle->mainloop;
+    pa_threaded_mainloop_signal(m, 0);
     return;
   }
-  indexed_dev_handle *indexed_dev = (indexed_dev_handle*)userdata;
   hm_pulse_device_t **dev = indexed_dev->dev + indexed_dev->dev_i;
   *dev = (hm_pulse_device_t*)calloc(sizeof(hm_pulse_device_t), 1);
   (*dev)->name = strdup(i->name);
@@ -107,10 +118,12 @@ void _hm_pulse_card_list_cb (pa_context *c, const pa_card_info *i, int eol, void
 }
 
 void _hm_pulse_source_list_cb (pa_context *c, const pa_source_info *i, int eol, void *userdata) {
+  struct hm_pulse_io_list *list = (struct hm_pulse_io_list*)userdata;
   if (eol > 0) {
+    pa_threaded_mainloop *m = list->pulse_handle->mainloop;
+    pa_threaded_mainloop_signal(m, 0);
     return;
   }
-  struct hm_pulse_io_list *list = (struct hm_pulse_io_list*)userdata;
   struct hm_pulse_io_node *new_node = (struct hm_pulse_io_node*)malloc(sizeof(struct hm_pulse_io_node));
   HM_LIST_NODE_INIT(new_node)
   new_node->io_device = (hm_device_io_t*)malloc(sizeof(hm_device_io_t));
@@ -121,10 +134,12 @@ void _hm_pulse_source_list_cb (pa_context *c, const pa_source_info *i, int eol, 
 }
 
 void _hm_pulse_sink_list_cb (pa_context *c, const pa_sink_info *i, int eol, void *userdata) {
+  struct hm_pulse_io_list *list = (struct hm_pulse_io_list*)userdata;
   if (eol > 0) {
+    pa_threaded_mainloop *m = list->pulse_handle->mainloop;
+    pa_threaded_mainloop_signal(m, 0);
     return;
   }
-  struct hm_pulse_io_list *list = (struct hm_pulse_io_list*)userdata;
   struct hm_pulse_io_node *new_node = (struct hm_pulse_io_node*)malloc(sizeof(struct hm_pulse_io_node));
   HM_LIST_NODE_INIT(new_node)
   new_node->io_device = (hm_device_io_t*)malloc(sizeof(hm_device_io_t));
@@ -135,11 +150,13 @@ void _hm_pulse_sink_list_cb (pa_context *c, const pa_sink_info *i, int eol, void
 }
 
 void _hm_pulse_n_cards_cb (pa_context *c, const pa_card_info *i, int eol, void *userdata) {
+  struct int_with_handle *ii = (struct int_with_handle*)userdata;
   if (eol > 0) {
+    pa_threaded_mainloop *m = ii->pulse_handle->mainloop;
+    pa_threaded_mainloop_signal(m, 0);
     return;
   }
-  int *ii = (int*)userdata;
-  (*ii)++;
+  (ii->i)++;
 }
 
 int hm_pulse_io_write(hm_device_io_t *io, buffer_t *buf, unsigned int n_bytes) {
@@ -156,13 +173,17 @@ int hm_pulse_io_read(hm_device_io_t *io, buffer_t *buf, unsigned int n_bytes)  {
 }
 
 int hm_pulse_n_cards(hm_backend_connection_t *pulse_backend) {
-  int n_cards = 0;
+  struct int_with_handle n_cards;
+  n_cards.i = 0;
+  n_cards.pulse_handle = (hm_pulse_handle_t*)(pulse_backend->backend_handle);
   hm_pulse_handle_t *pulse_handle = (hm_pulse_handle_t*)(pulse_backend->backend_handle);
   pa_context *hm_pa_context = (pa_context*)(pulse_handle->hm_context);
   pa_operation *o = 
     pa_context_get_card_info_list(hm_pa_context, _hm_pulse_n_cards_cb, (void*)(&n_cards));
-  while(pa_operation_get_state(o) != PA_OPERATION_DONE);
-  return n_cards;
+  pa_threaded_mainloop *m = pulse_handle->mainloop;
+  while(pa_operation_get_state(o) != PA_OPERATION_DONE)
+    pa_threaded_mainloop_wait(m);
+  return n_cards.i;
 }
 
 int hm_pulse_connection_init(hm_backend_connection_t **pulse_backend) {
@@ -171,6 +192,7 @@ int hm_pulse_connection_init(hm_backend_connection_t **pulse_backend) {
   pa_context *hm_pa_context = pa_context_new(m_api, "hiemal");
   pa_context_set_state_callback(hm_pa_context, _hm_pulse_context_state_cb, (void*)m);
   pa_context_connect(hm_pa_context, NULL, 0, NULL);
+  pa_threaded_mainloop_lock(m);
   pa_threaded_mainloop_start(m);
   while(pa_context_get_state(hm_pa_context) != PA_CONTEXT_READY)
     pa_threaded_mainloop_wait(m);
@@ -188,18 +210,25 @@ int hm_pulse_connection_init(hm_backend_connection_t **pulse_backend) {
   indexed_dev_handle dev_cb_handle;
   dev_cb_handle.dev = (hm_pulse_device_t**)((*pulse_backend)->devices);
   dev_cb_handle.dev_i = 0;
+  dev_cb_handle.pulse_handle = pulse_handle;
   struct hm_pulse_io_list *list = (struct hm_pulse_io_list*)malloc(sizeof(struct hm_pulse_io_list));
   HM_LIST_INIT(list)
+  list->pulse_handle = pulse_handle;
   // run callbacks to get context/server info
   pa_operation *o = 
     pa_context_get_card_info_list(hm_pa_context, _hm_pulse_card_list_cb, (void*)(&dev_cb_handle));
-  while(pa_operation_get_state(o) != PA_OPERATION_DONE);
+  while(pa_operation_get_state(o) != PA_OPERATION_DONE)
+    pa_threaded_mainloop_wait(m);
   o = pa_context_get_source_info_list(hm_pa_context, _hm_pulse_source_list_cb, (void*)list);
-  while(pa_operation_get_state(o) != PA_OPERATION_DONE);
+  while(pa_operation_get_state(o) != PA_OPERATION_DONE)
+    pa_threaded_mainloop_wait(m);
   o = pa_context_get_sink_info_list(hm_pa_context, _hm_pulse_sink_list_cb,(void*)list);
-  while(pa_operation_get_state(o) != PA_OPERATION_DONE);
+  while(pa_operation_get_state(o) != PA_OPERATION_DONE)
+    pa_threaded_mainloop_wait(m);
   o = pa_context_get_server_info(hm_pa_context, _hm_pulse_server_info_cb, (void*)pulse_handle);
-  while(pa_operation_get_state(o) != PA_OPERATION_DONE);
+  while(pa_operation_get_state(o) != PA_OPERATION_DONE)
+    pa_threaded_mainloop_wait(m);
+  pa_threaded_mainloop_unlock(m);
   io_list_to_array(list, *pulse_backend);
   (*pulse_backend)->dev_io_list = (hm_list_t*)list;
   int default_sink = get_dev_io_id(list, pulse_handle->server_info->default_sink_name);
