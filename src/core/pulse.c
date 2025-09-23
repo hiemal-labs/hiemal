@@ -183,6 +183,7 @@ int hm_pulse_n_cards(hm_backend_connection_t *pulse_backend) {
   pa_threaded_mainloop *m = pulse_handle->mainloop;
   while(pa_operation_get_state(o) != PA_OPERATION_DONE)
     pa_threaded_mainloop_wait(m);
+  pa_operation_unref(o);
   return n_cards.i;
 }
 
@@ -219,15 +220,19 @@ int hm_pulse_connection_init(hm_backend_connection_t **pulse_backend) {
     pa_context_get_card_info_list(hm_pa_context, _hm_pulse_card_list_cb, (void*)(&dev_cb_handle));
   while(pa_operation_get_state(o) != PA_OPERATION_DONE)
     pa_threaded_mainloop_wait(m);
+  pa_operation_unref(o);
   o = pa_context_get_source_info_list(hm_pa_context, _hm_pulse_source_list_cb, (void*)list);
   while(pa_operation_get_state(o) != PA_OPERATION_DONE)
     pa_threaded_mainloop_wait(m);
+  pa_operation_unref(o);
   o = pa_context_get_sink_info_list(hm_pa_context, _hm_pulse_sink_list_cb,(void*)list);
   while(pa_operation_get_state(o) != PA_OPERATION_DONE)
     pa_threaded_mainloop_wait(m);
+  pa_operation_unref(o);
   o = pa_context_get_server_info(hm_pa_context, _hm_pulse_server_info_cb, (void*)pulse_handle);
   while(pa_operation_get_state(o) != PA_OPERATION_DONE)
     pa_threaded_mainloop_wait(m);
+  pa_operation_unref(o);
   pa_threaded_mainloop_unlock(m);
   io_list_to_array(list, *pulse_backend);
   (*pulse_backend)->dev_io_list = (hm_list_t*)list;
