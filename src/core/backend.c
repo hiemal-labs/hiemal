@@ -31,6 +31,7 @@ const struct backend_info *get_backend_by_name(char *name) {
 int hm_backend_init(char *name, hm_backend_connection_t **backend_ptr) {
   const struct backend_info *info = get_backend_by_name(name);
   if (info == NULL) {
+    *backend_ptr = NULL;
     return -1;
   }
 
@@ -41,6 +42,7 @@ int hm_backend_close(hm_backend_connection_t **backend_ptr) {
   char *name = (*backend_ptr)->backend_name;
   const struct backend_info *info = get_backend_by_name(name);
   if (info == NULL) {
+    *backend_ptr = NULL;
     return -1;
   }
   return (info->delete_fn)(backend_ptr);

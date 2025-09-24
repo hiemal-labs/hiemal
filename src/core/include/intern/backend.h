@@ -1,11 +1,11 @@
 #ifndef _INTERN_BACKEND_H
 #define _INTERN_BACKEND_H
 
+#include "api/backend.h"
 #include "intern/common.h"
 
 typedef enum {ALSA=0, PULSEAUDIO} hm_backend_t;
 
-typedef struct _hm_backend_connection hm_backend_connection_t;
 typedef struct _hm_device hm_device_t;
 typedef struct _hm_device_io_connection hm_device_io_connection_t;
 struct _hm_backend_connection {
