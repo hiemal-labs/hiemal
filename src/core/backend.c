@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 
 #include "intern/backend.h"
@@ -9,12 +10,19 @@
 
 static const struct backend_info available_backends[] = {
   #ifdef WITH_PULSEAUDIO
-  {"PULSEAUDIO",
+  {"pulseaudio",
     hm_pulse_connection_init,
     hm_pulse_connection_close,
     hm_pulse_dump_info,
     hm_pulse_io_connect_by_id},
     #endif
+};
+
+static const char* backend_names[] = {
+  #ifdef WITH_PULSEAUDIO
+  "pulseaudio",
+  #endif
+  NULL
 };
 
 const struct backend_info *get_backend_by_name(char *name) {
@@ -46,4 +54,8 @@ int hm_backend_close(hm_backend_connection_t **backend_ptr) {
     return -1;
   }
   return (info->delete_fn)(backend_ptr);
+}
+
+const char** hm_backend_list() {
+  return backend_names;
 }
