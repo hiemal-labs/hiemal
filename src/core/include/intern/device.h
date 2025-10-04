@@ -1,14 +1,10 @@
 #ifndef _INTERN_DEVICE_H
 #define _INTERN_DEVICE_H
 
+#include "api/device.h"
+
 #include "intern/backend.h"
 #include "intern/buffer.h"
-
-typedef struct _hm_device hm_device_t;
-typedef struct _hm_device_io hm_device_io_t;
-typedef struct _hm_device_io_connection hm_device_io_connection_t;
-
-typedef enum {PLAYBACK=0, RECORDING} hm_io_type_t;
 
 typedef int (device_io_fn)(hm_device_io_t*, buffer_t*, unsigned int);
 

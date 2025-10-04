@@ -202,7 +202,7 @@ int hm_pulse_connection_init(hm_backend_connection_t **pulse_backend) {
     (hm_pulse_handle_t*)malloc(sizeof(hm_pulse_handle_t));
   pulse_handle->mainloop = m;
   pulse_handle->hm_context = hm_pa_context;
-  (*pulse_backend)->backend_name = "PULSEAUDIO";
+  (*pulse_backend)->backend_name = "pulseaudio";
   (*pulse_backend)->backend_type = PULSEAUDIO;
   (*pulse_backend)->backend_handle = (void*)pulse_handle;
   int n_cards = hm_pulse_n_cards(*pulse_backend);
