@@ -163,7 +163,7 @@ int hm_pulse_io_write(hm_device_io_t *io, buffer_t *buf, unsigned int n_bytes) {
   pa_stream *s = (pa_stream*)(io->backend_handle);
   void *pa_buf = malloc(n_bytes);
   buffer_read(buf, pa_buf, n_bytes);
-  pa_stream_write(s, buf, n_bytes, NULL, 0, PA_SEEK_RELATIVE);
+  pa_stream_write(s, pa_buf, n_bytes, NULL, 0, PA_SEEK_RELATIVE);
   free(pa_buf);
   return 0;
 }
