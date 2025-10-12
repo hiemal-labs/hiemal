@@ -56,6 +56,15 @@ int hm_backend_close(hm_backend_connection_t **backend_ptr) {
   return (info->delete_fn)(backend_ptr);
 }
 
+int hm_backend_dump_info(hm_backend_connection_t *backend_ptr) {
+  char *name = backend_ptr->backend_name;
+  const struct backend_info *info = get_backend_by_name(name);
+  if (info == NULL) {
+    return -1;
+  }
+  return (info->dump_info_fn)(backend_ptr);
+}
+
 const char** hm_backend_list() {
   return backend_names;
 }
