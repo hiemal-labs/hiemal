@@ -159,17 +159,87 @@ void _hm_pulse_n_cards_cb (pa_context *c, const pa_card_info *i, int eol, void *
   (ii->i)++;
 }
 
-int hm_pulse_io_write(hm_device_io_t *io, buffer_t *buf, unsigned int n_bytes) {
-  pa_stream *s = (pa_stream*)(io->backend_handle);
+void _hm_pulse_read_cb (pa_stream *s, size_t n_bytes, void *userdata) {
+  hm_pulse_handle_t *pulse_handle = (hm_pulse_handle_t*)userdata;
+  pa_threaded_mainloop *m = pulse_handle->mainloop;
+  pa_threaded_mainloop_signal(m, 0);
+  return;
+}
+
+void _hm_pulse_write_cb (pa_stream *s, size_t n_bytes, void *userdata) {
+  hm_pulse_handle_t *pulse_handle = (hm_pulse_handle_t*)userdata;
+  pa_threaded_mainloop *m = pulse_handle->mainloop;
+  pa_threaded_mainloop_signal(m, 0);
+  return;
+}
+
+int _hm_pulse_io_write(pa_stream *s, pa_threaded_mainloop *m, buffer_t *buf, unsigned int n_bytes) {
+  pa_threaded_mainloop_lock(m);
   void *pa_buf = malloc(n_bytes);
-  buffer_read(buf, pa_buf, n_bytes);
-  pa_stream_write(s, pa_buf, n_bytes, NULL, 0, PA_SEEK_RELATIVE);
+  void *pa_buf_itr = pa_buf;
+  int buf_size = buffer_read(buf, pa_buf, n_bytes);
+  if (buf_size < n_bytes) n_bytes = buf_size;
+  while (n_bytes > 0) {
+    pa_threaded_mainloop_wait(m);
+    size_t writable_bytes = pa_stream_writable_size(s);
+    if (writable_bytes > n_bytes) writable_bytes = n_bytes;
+    pa_stream_write(s, pa_buf_itr, writable_bytes, NULL, 0, PA_SEEK_RELATIVE);
+    n_bytes -= writable_bytes;
+    pa_buf_itr += writable_bytes;
+  }
   free(pa_buf);
+  pa_threaded_mainloop_unlock(m);
   return 0;
 }
 
-int hm_pulse_io_read(hm_device_io_t *io, buffer_t *buf, unsigned int n_bytes)  {
+// externally-managed io device connection
+int hm_pulse_io_write_ext(hm_device_io_connection_t *conn, buffer_t *buf, unsigned int n_bytes) {
+  pa_stream *s = (pa_stream*)(conn->backend_dev_io_handle);
+  //return _hm_pulse_io_write(s, buf, n_bytes);
   return 0;
+}
+
+int hm_pulse_io_write(hm_device_io_t *io, buffer_t *buf, unsigned int n_bytes) {
+  hm_pulse_handle_t *pulse_handle = (hm_pulse_handle_t*)io->backend_handle;
+  pa_context *c = pulse_handle->hm_context;
+  pa_threaded_mainloop *m = pulse_handle->mainloop;
+  pa_stream *s = pa_stream_new(c, io->name, &(pulse_handle->server_info->sample_spec), NULL);
+  int rc = _hm_pulse_io_write(s, m, buf, n_bytes);
+  pa_stream_unref(s);
+  return rc;
+}
+
+int _hm_pulse_io_read(pa_stream *s, pa_threaded_mainloop *m, buffer_t *buf, unsigned int n_bytes) {
+  pa_threaded_mainloop_lock(m);
+  int buf_size = buffer_n_write_bytes(buf);
+  if (buf_size < n_bytes) n_bytes = buf_size;
+  const void *pa_buf = NULL;
+  size_t n_bytes_read = 0;
+  while (n_bytes > 0) {
+    pa_threaded_mainloop_wait(m);
+    size_t readable_bytes = pa_stream_peek(s, &pa_buf, &n_bytes_read);
+    if (n_bytes_read > n_bytes) n_bytes_read = n_bytes;
+    buffer_write(buf, pa_buf, n_bytes_read);
+    n_bytes -= readable_bytes;
+    pa_buf = NULL;
+  }
+  pa_threaded_mainloop_unlock(m);
+  return 0;
+}
+
+// externally-managed io device connection
+int hm_pulse_io_read_ext(hm_device_io_connection_t *conn, buffer_t *buf, unsigned int n_bytes) {
+  return 0;
+}
+
+int hm_pulse_io_read(hm_device_io_t *io, buffer_t *buf, unsigned int n_bytes) {
+  hm_pulse_handle_t *pulse_handle = (hm_pulse_handle_t*)io->backend_handle;
+  pa_context *c = pulse_handle->hm_context;
+  pa_threaded_mainloop *m = pulse_handle->mainloop;
+  pa_stream *s = pa_stream_new(c, io->name, &(pulse_handle->server_info->sample_spec), NULL);
+  int rc = _hm_pulse_io_read(s, m, buf, n_bytes);
+  pa_stream_unref(s);
+  return rc;
 }
 
 int hm_pulse_n_cards(hm_backend_connection_t *pulse_backend) {
@@ -255,8 +325,10 @@ int hm_pulse_io_connect_by_id(hm_device_io_connection_t **io, hm_backend_connect
   switch (io_node_itr->io_device->type) {
     case PLAYBACK:
       pa_stream_connect_playback(new_stream, io_node_itr->io_device->name, NULL, 0, NULL, NULL);
+      pa_stream_set_write_callback(new_stream, _hm_pulse_write_cb, (void*)pulse_handle);
     case RECORDING:
       pa_stream_connect_record(new_stream, io_node_itr->io_device->name, NULL, 0);
+      pa_stream_set_read_callback(new_stream, _hm_pulse_read_cb,(void*)pulse_handle);
   }
   *io = (hm_device_io_connection_t*)malloc(sizeof(hm_device_io_connection_t));
   (*io)->backend_handle = (void*)new_stream;
@@ -274,8 +346,10 @@ int hm_pulse_default_io_connect(hm_device_io_connection_t **io,
   switch (dir) {
     case PLAYBACK:
       pa_stream_connect_playback(new_stream, "default", NULL, 0, NULL, NULL);
+      pa_stream_set_write_callback(new_stream, _hm_pulse_write_cb, (void*)pulse_handle);
     case RECORDING:
       pa_stream_connect_record(new_stream, "default", NULL, 0);
+      pa_stream_set_read_callback(new_stream, _hm_pulse_read_cb,(void*)pulse_handle);
   }
   *io = (hm_device_io_connection_t*)malloc(sizeof(hm_device_io_connection_t));
   (*io)->backend_handle = (void*)new_stream;

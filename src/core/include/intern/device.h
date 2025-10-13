@@ -19,11 +19,15 @@ struct _hm_device_io {
   hm_io_type_t type;
   hm_device_t *device;
   hm_backend_t dev_backend;
-  void *backend_handle;
+  void *backend_dev_io_handle; // backend-specific handle for io device
+  void *backend_handle; // main backend handle
+  device_io_fn *read_fn;
+  device_io_fn *write_fn;
 };
 
 struct _hm_device_io_connection {
   hm_io_type_t type;
+  void *backend_dev_io_handle;
   void *backend_handle;
   device_io_fn *read_fn;
   device_io_fn *write_fn;

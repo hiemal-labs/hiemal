@@ -24,3 +24,11 @@ int default_device_io_connect(hm_device_io_connection_t **io, hm_backend_connect
   (info->io_connect_fn)(io, backend, io_id);
   return 0;
 }
+
+int device_io_read(hm_device_io_t *io, buffer_t *buf, unsigned int n_bytes) {
+  return (io->read_fn)(io, buf, n_bytes);
+}
+
+int device_io_write(hm_device_io_t *io, buffer_t *buf, unsigned int n_bytes) {
+  return (io->write_fn)(io, buf, n_bytes);
+}
