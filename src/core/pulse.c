@@ -117,62 +117,6 @@ void _hm_pulse_card_list_cb (pa_context *c, const pa_card_info *i, int eol, void
   (indexed_dev->dev_i)++;
 }
 
-void _hm_pulse_source_list_cb (pa_context *c, const pa_source_info *i, int eol, void *userdata) {
-  struct hm_pulse_io_list *list = (struct hm_pulse_io_list*)userdata;
-  if (eol > 0) {
-    pa_threaded_mainloop *m = list->pulse_handle->mainloop;
-    pa_threaded_mainloop_signal(m, 0);
-    return;
-  }
-  struct hm_pulse_io_node *new_node = (struct hm_pulse_io_node*)malloc(sizeof(struct hm_pulse_io_node));
-  HM_LIST_NODE_INIT(new_node)
-  new_node->io_device = (hm_device_io_t*)malloc(sizeof(hm_device_io_t));
-  new_node->io_device->name = strdup(i->name);
-  new_node->io_device->type = RECORDING;
-  new_node->card_id = i->card;
-  hm_list_append(list, new_node);
-}
-
-void _hm_pulse_sink_list_cb (pa_context *c, const pa_sink_info *i, int eol, void *userdata) {
-  struct hm_pulse_io_list *list = (struct hm_pulse_io_list*)userdata;
-  if (eol > 0) {
-    pa_threaded_mainloop *m = list->pulse_handle->mainloop;
-    pa_threaded_mainloop_signal(m, 0);
-    return;
-  }
-  struct hm_pulse_io_node *new_node = (struct hm_pulse_io_node*)malloc(sizeof(struct hm_pulse_io_node));
-  HM_LIST_NODE_INIT(new_node)
-  new_node->io_device = (hm_device_io_t*)malloc(sizeof(hm_device_io_t));
-  new_node->io_device->name = strdup(i->name);
-  new_node->io_device->type = PLAYBACK;
-  new_node->card_id = i->card;
-  hm_list_append(list, new_node);
-}
-
-void _hm_pulse_n_cards_cb (pa_context *c, const pa_card_info *i, int eol, void *userdata) {
-  struct int_with_handle *ii = (struct int_with_handle*)userdata;
-  if (eol > 0) {
-    pa_threaded_mainloop *m = ii->pulse_handle->mainloop;
-    pa_threaded_mainloop_signal(m, 0);
-    return;
-  }
-  (ii->i)++;
-}
-
-void _hm_pulse_read_cb (pa_stream *s, size_t n_bytes, void *userdata) {
-  hm_pulse_handle_t *pulse_handle = (hm_pulse_handle_t*)userdata;
-  pa_threaded_mainloop *m = pulse_handle->mainloop;
-  pa_threaded_mainloop_signal(m, 0);
-  return;
-}
-
-void _hm_pulse_write_cb (pa_stream *s, size_t n_bytes, void *userdata) {
-  hm_pulse_handle_t *pulse_handle = (hm_pulse_handle_t*)userdata;
-  pa_threaded_mainloop *m = pulse_handle->mainloop;
-  pa_threaded_mainloop_signal(m, 0);
-  return;
-}
-
 int _hm_pulse_io_write(pa_stream *s, pa_threaded_mainloop *m, buffer_t *buf, unsigned int n_bytes) {
   pa_threaded_mainloop_lock(m);
   void *pa_buf = malloc(n_bytes);
@@ -240,6 +184,70 @@ int hm_pulse_io_read(hm_device_io_t *io, buffer_t *buf, unsigned int n_bytes) {
   int rc = _hm_pulse_io_read(s, m, buf, n_bytes);
   pa_stream_unref(s);
   return rc;
+}
+
+void _hm_pulse_source_list_cb (pa_context *c, const pa_source_info *i, int eol, void *userdata) {
+  struct hm_pulse_io_list *list = (struct hm_pulse_io_list*)userdata;
+  if (eol > 0) {
+    pa_threaded_mainloop *m = list->pulse_handle->mainloop;
+    pa_threaded_mainloop_signal(m, 0);
+    return;
+  }
+  struct hm_pulse_io_node *new_node = (struct hm_pulse_io_node*)malloc(sizeof(struct hm_pulse_io_node));
+  HM_LIST_NODE_INIT(new_node)
+  new_node->io_device = (hm_device_io_t*)malloc(sizeof(hm_device_io_t));
+  new_node->io_device->name = strdup(i->name);
+  new_node->io_device->type = RECORDING;
+  new_node->io_device->backend_dev_io_handle = (void*)i;
+  new_node->io_device->backend_handle = (void*)list->pulse_handle;
+  new_node->io_device->read_fn = hm_pulse_io_read;
+  new_node->io_device->write_fn = NULL;
+  new_node->card_id = i->card;
+  hm_list_append(list, new_node);
+}
+
+void _hm_pulse_sink_list_cb (pa_context *c, const pa_sink_info *i, int eol, void *userdata) {
+  struct hm_pulse_io_list *list = (struct hm_pulse_io_list*)userdata;
+  if (eol > 0) {
+    pa_threaded_mainloop *m = list->pulse_handle->mainloop;
+    pa_threaded_mainloop_signal(m, 0);
+    return;
+  }
+  struct hm_pulse_io_node *new_node = (struct hm_pulse_io_node*)malloc(sizeof(struct hm_pulse_io_node));
+  HM_LIST_NODE_INIT(new_node)
+  new_node->io_device = (hm_device_io_t*)malloc(sizeof(hm_device_io_t));
+  new_node->io_device->name = strdup(i->name);
+  new_node->io_device->type = PLAYBACK;
+  new_node->io_device->backend_dev_io_handle = (void*)i;
+  new_node->io_device->backend_handle = (void*)list->pulse_handle;
+  new_node->io_device->read_fn = NULL;
+  new_node->io_device->write_fn = hm_pulse_io_write;
+  new_node->card_id = i->card;
+  hm_list_append(list, new_node);
+}
+
+void _hm_pulse_n_cards_cb (pa_context *c, const pa_card_info *i, int eol, void *userdata) {
+  struct int_with_handle *ii = (struct int_with_handle*)userdata;
+  if (eol > 0) {
+    pa_threaded_mainloop *m = ii->pulse_handle->mainloop;
+    pa_threaded_mainloop_signal(m, 0);
+    return;
+  }
+  (ii->i)++;
+}
+
+void _hm_pulse_read_cb (pa_stream *s, size_t n_bytes, void *userdata) {
+  hm_pulse_handle_t *pulse_handle = (hm_pulse_handle_t*)userdata;
+  pa_threaded_mainloop *m = pulse_handle->mainloop;
+  pa_threaded_mainloop_signal(m, 0);
+  return;
+}
+
+void _hm_pulse_write_cb (pa_stream *s, size_t n_bytes, void *userdata) {
+  hm_pulse_handle_t *pulse_handle = (hm_pulse_handle_t*)userdata;
+  pa_threaded_mainloop *m = pulse_handle->mainloop;
+  pa_threaded_mainloop_signal(m, 0);
+  return;
 }
 
 int hm_pulse_n_cards(hm_backend_connection_t *pulse_backend) {
