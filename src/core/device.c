@@ -32,3 +32,11 @@ int device_io_read(hm_device_io_t *io, buffer_t *buf, unsigned int n_bytes) {
 int device_io_write(hm_device_io_t *io, buffer_t *buf, unsigned int n_bytes) {
   return (io->write_fn)(io, buf, n_bytes);
 }
+
+int device_io_read_ext(hm_device_io_connection_t *io, buffer_t *buf, unsigned int n_bytes) {
+  return (io->read_fn)(io, buf, n_bytes);
+}
+
+int device_io_write_ext(hm_device_io_connection_t *io, buffer_t *buf, unsigned int n_bytes) {
+  return (io->write_fn)(io, buf, n_bytes);
+}

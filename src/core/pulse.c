@@ -343,8 +343,8 @@ int hm_pulse_io_connect_by_id(hm_device_io_connection_t **io, hm_backend_connect
   *io = (hm_device_io_connection_t*)malloc(sizeof(hm_device_io_connection_t));
   (*io)->backend_handle = (void*)new_stream;
   (*io)->type = io_node_itr->io_device->type;
-  (*io)->read_fn = hm_pulse_io_read;
-  (*io)->write_fn = hm_pulse_io_write;
+  (*io)->read_fn = hm_pulse_io_read_ext;
+  (*io)->write_fn = hm_pulse_io_write_ext;
   return 0;
 }
 
@@ -364,8 +364,8 @@ int hm_pulse_default_io_connect(hm_device_io_connection_t **io,
   *io = (hm_device_io_connection_t*)malloc(sizeof(hm_device_io_connection_t));
   (*io)->backend_handle = (void*)new_stream;
   (*io)->type = dir;
-  (*io)->read_fn = hm_pulse_io_read;
-  (*io)->write_fn = hm_pulse_io_write;
+  (*io)->read_fn = hm_pulse_io_read_ext;
+  (*io)->write_fn = hm_pulse_io_write_ext;
   return 0;
 }
 

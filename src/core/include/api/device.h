@@ -18,4 +18,6 @@ int default_device_io_connect(hm_device_io_connection_t **io, hm_backend_connect
 
 int device_io_read(hm_device_io_t *io, buffer_t *buf, unsigned int n_bytes);
 int device_io_write(hm_device_io_t *io, buffer_t *buf, unsigned int n_bytes);
+int device_io_read_ext(hm_device_io_connection_t *io, buffer_t *buf, unsigned int n_bytes);
+int device_io_write_ext(hm_device_io_connection_t *io, buffer_t *buf, unsigned int n_bytes);
 #endif
