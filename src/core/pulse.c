@@ -161,11 +161,12 @@ int _hm_pulse_io_read(pa_stream *s, pa_threaded_mainloop *m, buffer_t *buf, unsi
   size_t n_bytes_read = 0;
   while (n_bytes > 0) {
     pa_threaded_mainloop_wait(m);
-    size_t readable_bytes = pa_stream_peek(s, &pa_buf, &n_bytes_read);
+    pa_stream_peek(s, &pa_buf, &n_bytes_read);
     if (n_bytes_read > n_bytes) n_bytes_read = n_bytes;
     buffer_write(buf, pa_buf, n_bytes_read);
-    n_bytes -= readable_bytes;
+    n_bytes -= n_bytes_read;
     pa_buf = NULL;
+    pa_stream_drop(s);
   }
   pa_threaded_mainloop_unlock(m);
   return 0;
@@ -341,7 +342,8 @@ int hm_pulse_io_connect_by_id(hm_device_io_connection_t **io, hm_backend_connect
       pa_stream_set_read_callback(new_stream, _hm_pulse_read_cb,(void*)pulse_handle);
   }
   *io = (hm_device_io_connection_t*)malloc(sizeof(hm_device_io_connection_t));
-  (*io)->backend_handle = (void*)new_stream;
+  (*io)->backend_dev_io_handle = (void*)new_stream;
+  (*io)->backend_handle = (void*)pulse_handle;
   (*io)->type = io_node_itr->io_device->type;
   (*io)->read_fn = hm_pulse_io_read_ext;
   (*io)->write_fn = hm_pulse_io_write_ext;

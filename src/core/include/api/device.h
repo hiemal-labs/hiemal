@@ -1,13 +1,12 @@
 #ifndef _DEVICE_H
 #define _DEVICE_H
 
-#include "api/buffer.h"
 #include "backend.h"
 
 typedef struct _hm_device hm_device_t;
 typedef struct _hm_device_io hm_device_io_t;
 typedef struct _hm_device_io_connection hm_device_io_connection_t;
-
+typedef struct _buffer buffer_t;
 typedef enum {PLAYBACK=0, RECORDING} hm_io_type_t;
 
 int get_device_by_id(hm_device_t **dev, hm_backend_connection_t *backend, unsigned int id);
