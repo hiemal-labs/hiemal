@@ -139,8 +139,8 @@ int _hm_pulse_io_write(pa_stream *s, pa_threaded_mainloop *m, buffer_t *buf, uns
 // externally-managed io device connection
 int hm_pulse_io_write_ext(hm_device_io_connection_t *conn, buffer_t *buf, unsigned int n_bytes) {
   pa_stream *s = (pa_stream*)(conn->backend_dev_io_handle);
-  //return _hm_pulse_io_write(s, buf, n_bytes);
-  return 0;
+  pa_threaded_mainloop *m = ((hm_pulse_handle_t*)conn->backend_handle)->mainloop;
+  return _hm_pulse_io_write(s, m, buf, n_bytes);
 }
 
 int hm_pulse_io_write(hm_device_io_t *io, buffer_t *buf, unsigned int n_bytes) {
@@ -173,7 +173,9 @@ int _hm_pulse_io_read(pa_stream *s, pa_threaded_mainloop *m, buffer_t *buf, unsi
 
 // externally-managed io device connection
 int hm_pulse_io_read_ext(hm_device_io_connection_t *conn, buffer_t *buf, unsigned int n_bytes) {
-  return 0;
+  pa_stream *s = (pa_stream*)(conn->backend_dev_io_handle);
+  pa_threaded_mainloop *m = ((hm_pulse_handle_t*)conn->backend_handle)->mainloop;
+  return _hm_pulse_io_read(s, m, buf, n_bytes);
 }
 
 int hm_pulse_io_read(hm_device_io_t *io, buffer_t *buf, unsigned int n_bytes) {
