@@ -24,7 +24,7 @@ int hm_log_msg(unsigned int lvl, const char *msg, const char *fn_name) {
   else if (lvl == LOG_LVL_DEBUG)fprintf(stderr, "[DEBUG] (%s): ", fn_name);
   else if (lvl == LOG_LVL_VERBOSE) fprintf(stderr, "[VERBOSE] (%s): ", fn_name);
   else return -1;
-  printf("%s\n", msg);
+  fprintf(stderr"%s\n", msg);
   return 0;
 }
 
