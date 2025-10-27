@@ -12,10 +12,10 @@ extern unsigned int log_level;
 unsigned int hm_set_loglvl(unsigned int lvl);
 unsigned int hm_get_loglvl();
 
-int hm_log_err(char *msg);
-int hm_log_warn(char *msg);
-int hm_log_info(char *msg);
-int hm_log_debug(char *msg);
-int hm_log_verbose(char *msg);
+int hm_log_err(const char *msg, const char *fn_name);
+int hm_log_warn(const char *msg, const char *fn_name);
+int hm_log_info(const char *msg, const char *fn_name);
+int hm_log_debug(const char *msg, const char *fn_name);
+int hm_log_verbose(const char *msg, const char *fn_name);
 
 #endif
