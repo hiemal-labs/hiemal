@@ -1,0 +1,17 @@
+Checks:
+  - "bugprone-*"
+  - "cert-*"
+  - "clang-*"
+  - "cppcoreguidelines-*"
+  - "hicpp-*"
+  - "misc-*"
+  - "modernize-*"
+  - "performance-*"
+  - "portability-*"
+  - "readability-*"
+  - "-bugprone-easily-swappable-parameters"
+  - "-modernize-use-trailing-return-type"
+  - "-readability-avoid-const-params-in-decls"
+  - "-readability-else-after-return"
+
+WarningsAsErrors: "-*"
