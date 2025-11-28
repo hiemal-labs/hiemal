@@ -196,18 +196,23 @@ TEST(hm_list_copy_array) {
     ASSERT_TRUE(strncmp((void*)&(((struct test_node*)hm_list_at(&test_list2, i+1))->dat), hm_array_at(&test_arr, i), test_arr.item_size) == 0)
   }
 
-  int clear_free_fn(hm_list_node_t *node) {
+  /*int clear_free_fn(hm_list_node_t *node) {
     struct test_node* _node = (struct test_node*)node;
     _node->free_fn = NULL;
     return 0;
   }
-  hm_list_itr(&test_list2, clear_free_fn);
+  hm_list_itr(&test_list2, clear_free_fn);*/
+  test_list2.head->free_fn = NULL;
   hm_list_copy_array(&test_list2, &test_arr, COPY_OVERWRITE);
   ASSERT_TRUE(test_list2.n_items == sizeof(arr_buf)/sizeof(int))
   
   for (i = 0; i < arr_buf_len; i++) {
     ASSERT_TRUE(strncmp((void*)&(((struct test_node*)hm_list_at(&test_list2, i))->dat), hm_array_at(&test_arr, i), test_arr.item_size) == 0)
-  } 
+  }
+  hm_list_clear(&test_list1);
+  hm_list_clear(&test_list2);
+  hm_array_clear(&test_arr);
+  free(test_arr.buf);
   return TEST_SUCCESS;
 }
 
@@ -260,6 +265,8 @@ TEST(hm_array_copy_list) {
   ASSERT_TRUE(memcmp(arr2.buf, arr_ref, sizeof(arr_ref)) == 0)
 
   hm_array_clear(&arr1);
+  free(arr1.buf);
   hm_array_clear(&arr2);
+  free(arr2.buf);
   return TEST_SUCCESS;
 }
