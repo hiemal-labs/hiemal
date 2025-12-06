@@ -119,7 +119,7 @@ int buffer_fd_drain(buffer_t *buf) {
 }
 
 int buffer_event_add(buffer_t *buf, hm_event_t *e) {
-  if (e->obj_type != OBJ_BUFFER) return -1;
+  if (e->obj_type != OBJ_PIPE) return -1;
   hm_list_append(buf->event_list, e);
   return 0;
 }

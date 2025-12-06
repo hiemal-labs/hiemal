@@ -32,7 +32,7 @@ TEST(event_buffer) {
     return NULL;
   }
   buffer_init(&buf, 0x1000, RING);
-  hm_event_init(&e, OBJ_BUFFER, event_cond);
+  hm_event_init(&e, OBJ_PIPE, event_cond);
   buffer_event_add(buf, e);
   HM_THREAD_CREATE(buf_write_thread, NULL)
   hm_event_poll(e);

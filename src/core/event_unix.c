@@ -49,7 +49,7 @@ int hm_event_init(hm_event_t **e, enum hm_event_obj_type event_type, event_condi
   *e = (hm_event_t*)malloc(sizeof(hm_event_t));
   (*e)->obj_type = event_type;
   (*e)->cond = cond;
-  if (event_type == OBJ_BUFFER) {
+  if (event_type == OBJ_PIPE) {
     pipe((*e)->obj.buf_pipe);
   }
   return 0;
@@ -62,7 +62,7 @@ int hm_event_list_delete(hm_event_list_t **l) {
 }
 
 int hm_event_delete(hm_event_t **e) {
-  if((*e)->obj_type == OBJ_BUFFER) {
+  if((*e)->obj_type == OBJ_PIPE) {
     close((*e)->obj.buf_pipe[0]);
     close((*e)->obj.buf_pipe[1]);
   }
@@ -144,7 +144,7 @@ int hm_event_buffer_wake(hm_event_list_t *buf_event_list, buffer_io_type_t io_ty
 }
 
 int hm_event_poll(hm_event_t *e) {
-  if (e->obj_type == OBJ_BUFFER) hm_poll_buffer(e);
+  if (e->obj_type == OBJ_PIPE) hm_poll_buffer(e);
   else return -1;
   return 0;
 }
