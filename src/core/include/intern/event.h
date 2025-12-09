@@ -11,7 +11,7 @@ enum hm_event_obj_type {
   OBJ_FD=0,
   OBJ_MUTEX,
   OBJ_FUTEX,
-  OBJ_PIPE
+  OBJ_BUFFER
 };
 
 #ifdef __linux__
