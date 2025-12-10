@@ -82,6 +82,8 @@ def gen_op_wrappers(ops, in_files=["ops.h.in", "ops_internal.h.in", "ops.c.in"],
 
   op_wrapper_defs = list()
   op_wrapper_decls = list()
+  op_struct_decls = list()
+  op_struct_defs = list()
   op_impl_defs = list()
   op_names = "{\n"
   op_wrapper_kwargs = list()
@@ -92,13 +94,24 @@ def gen_op_wrappers(ops, in_files=["ops.h.in", "ops_internal.h.in", "ops.c.in"],
 
   for op in ops:
     op_wrapper_defs.append("int " + op[0] + "(" + ", ".join(op[2]) + ", " + ", ".join(op[1]) + ");")
-    op_impl_defs.append("int " + op[0] + "_impl(" + ", ".join(op[2]) + ", " + op[0] + "_kwargs_t *kwargs);")
+    op_impl_defs.append("int " + op[0] + "_impl(" + ", ".join(op[2]) + ", " + "void *kwargs);")
     new_op_decl = "int " + op[0] + "(" + ", ".join(op[2]) + ", " + ", ".join(op[1]) + ") {\n  " + op[0] + "_kwargs_t op_args;\n"
+    new_op_struct_decl = "hm_dsp_op* " + op[0] + "_op(hm_format_type input_type, hm_format_type output_type, " + ", ".join(op[1]) + ");"
+    new_op_struct_def = "hm_dsp_op* " + op[0] + "_op(hm_format_type input_type, hm_format_type output_type, " + ", ".join(op[1]) + ") {\n"
+    new_op_struct_def += op[0] + "_kwargs_t* op_args = malloc(sizeof(" + op[0] + "_kwargs_t));\n"
+    new_op_struct_def += "  hm_dsp_op* new_op = (hm_dsp_op*)malloc(sizeof(hm_dsp_op));\n"
+    new_op_struct_def += "  new_op->op_fn = {}_impl;\n".format(op[0])
+    new_op_struct_def += "  new_op->input_type = input_type;\n  new_op->input_type = input_type;\n"
+    op_struct_decls.append(new_op_struct_decl)
     op_wrapper_macro_str = "#define __" + op[0].upper() + "_ARGS_UNPACK"
     for param in op[1]:
       new_op_decl += "  op_args.{0} = {0};\n".format(param.split(" ")[-1])
-      op_wrapper_macro_str += " {} = kwargs->{};".format(param, param.split(" ")[-1])
+      new_op_struct_def += "  op_args->{0} = {0};\n".format(param.split(" ")[-1])
+      op_wrapper_macro_str += (" {} = ((" + op[0] + "_kwargs_t*)kwargs)->{};").format(param, param.split(" ")[-1])
     new_op_decl += "  " + op[0] + "_impl(" + ", ".join([x.split(" ")[-1] for x in op[2]]) + ", &op_args);\n}"
+    new_op_struct_def += "  new_op->kwargs = (void*)op_args;\n"
+    new_op_struct_def += "  return new_op;\n}"
+    op_struct_defs.append(new_op_struct_def)
     op_wrapper_macro_str
     op_wrapper_decls.append(new_op_decl)
     op_wrapper_kwarg_macros.append(op_wrapper_macro_str)
@@ -111,7 +124,7 @@ def gen_op_wrappers(ops, in_files=["ops.h.in", "ops_internal.h.in", "ops.c.in"],
   ops_h_file.write("automatically with util/gen_ops.py\n\n")
   with open(in_files[0]) as f:
     ops_h_in_str = f.read()
-  ops_h_file.write(ops_h_in_str.replace("%%OP_WRAPPER_DEFS%%", "\n".join(op_wrapper_defs)))
+  ops_h_file.write(ops_h_in_str.replace("%%OP_WRAPPER_DEFS%%", "\n".join(op_wrapper_defs + [""] + op_struct_decls)))
   ops_h_file.seek(0)
   if out_files[0] == None:
     sys.stdout.write("--- ops.h ---\n")
@@ -149,7 +162,7 @@ def gen_op_wrappers(ops, in_files=["ops.h.in", "ops_internal.h.in", "ops.c.in"],
     ops_c_str = f.read()
   ops_c_file.write(ops_c_str.replace("%%N_OPS%%", str(len(ops) + 1))\
                             .replace("%%OP_LIST%%", op_names) \
-                            .replace("%%OP_WRAPPER_DECLS%%", "\n\n".join(op_wrapper_decls)))
+                            .replace("%%OP_WRAPPER_DECLS%%", "\n\n".join(op_wrapper_decls + op_struct_defs)))
   ops_c_file.seek(0)
   if out_files[2] == None:
     sys.stdout.write("\n--- ops.c ---\n")

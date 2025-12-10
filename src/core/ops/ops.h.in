@@ -1,7 +1,18 @@
 #ifndef _HM_OPS_H
 #define _HM_OPS_H
 
+typedef enum {
+  S16LE_I=1,
+  S16LE_N,
+  F16LE_I,
+  F16LE_N,
+  DEFAULT_FORMAT
+} hm_format_type;
+
+typedef struct hm_dsp_op hm_dsp_op;
+
 const char **hm_op_list();
+int hm_op_run(hm_dsp_op *op, double *src, double *dest, unsigned int n_bytes);
 
 %%OP_WRAPPER_DEFS%%
 

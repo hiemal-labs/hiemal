@@ -3,7 +3,16 @@
 
 #include "ops.h"
 
-#define DSP_OP(name, src_type, dest_type) int name ##_impl(src_type src, dest_type dest, unsigned int n_bytes, name ##_kwargs_t *kwargs)
+#define DSP_OP(name, src_type, dest_type) int name ##_impl(src_type src, dest_type dest, unsigned int n_bytes, void *kwargs)
+
+typedef int (dsp_op_fn)(double*, double*, unsigned int, void*);
+
+struct hm_dsp_op {
+  dsp_op_fn *op_fn;
+  hm_format_type input_type;
+  hm_format_type output_type;
+  void *kwargs;
+};
 
 %%OP_KWARG_DEFS%%
 

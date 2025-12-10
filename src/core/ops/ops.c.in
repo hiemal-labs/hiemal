@@ -1,8 +1,13 @@
 #include <stddef.h>
+#include <stdlib.h>
 
 #include "ops_internal.h"
 
 static const char* ops_list[%%N_OPS%%] = %%OP_LIST%%
+
+int hm_op_run(hm_dsp_op *op, double *src, double *dest, unsigned int n_bytes) {
+  return (op->op_fn)(src, dest, n_bytes, op->kwargs);
+}
 
 %%OP_WRAPPER_DECLS%%
 

@@ -1,4 +1,6 @@
-#include "ops.h"
+#include <stdlib.h>
+
+#include "ops_internal.h"
 
 #include "test_common.h"
 
@@ -12,9 +14,24 @@ TEST(fir_filter_op) {
   double b[] = {0.1, 0.3, 1.5};
   double filtered_signal[6];
   double tol = 1e-5;
-  rc = fir_filter(signal, filtered_signal, n_bytes, b, b_order);
+  {
+  double filtered_signal[6] = {0};
+  int rc = fir_filter(signal, filtered_signal, n_bytes, b, b_order);
   ASSERT_TRUE(rc == n_bytes);
   ASSERT_ALMOST_EQUAL_1D(filtered_signal, 
     filtered_signal_ref,n_samples,tol);
+  }
+
+  // test result using hm_op_run
+  {
+  double filtered_signal[6] = {0};
+  hm_dsp_op *fir_op = fir_filter_op(DEFAULT_FORMAT, DEFAULT_FORMAT, b, b_order);
+  int rc = hm_op_run(fir_op, signal, filtered_signal, n_bytes);
+  ASSERT_TRUE(rc == n_bytes);
+  ASSERT_ALMOST_EQUAL_1D(filtered_signal, 
+    filtered_signal_ref,n_samples,tol);
+  free(fir_op->kwargs);
+  free(fir_op);
+  }
   return TEST_SUCCESS;
 }
