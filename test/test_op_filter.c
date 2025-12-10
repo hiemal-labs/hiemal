@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "ops_internal.h"
+#include "ops.h"
 
 #include "test_common.h"
 
@@ -30,8 +30,7 @@ TEST(fir_filter_op) {
   ASSERT_TRUE(rc == n_bytes);
   ASSERT_ALMOST_EQUAL_1D(filtered_signal, 
     filtered_signal_ref,n_samples,tol);
-  free(fir_op->kwargs);
-  free(fir_op);
+  hm_op_delete(fir_op);
   }
   return TEST_SUCCESS;
 }

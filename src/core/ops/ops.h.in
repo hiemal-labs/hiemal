@@ -13,6 +13,7 @@ typedef struct hm_dsp_op hm_dsp_op;
 
 const char **hm_op_list();
 int hm_op_run(hm_dsp_op *op, double *src, double *dest, unsigned int n_bytes);
+int hm_op_delete(hm_dsp_op *op);
 
 %%OP_WRAPPER_DEFS%%
 

@@ -9,6 +9,12 @@ int hm_op_run(hm_dsp_op *op, double *src, double *dest, unsigned int n_bytes) {
   return (op->op_fn)(src, dest, n_bytes, op->kwargs);
 }
 
+int hm_op_delete(hm_dsp_op *op) {
+  free(op->kwargs);
+  free(op);
+  return 0;
+}
+
 %%OP_WRAPPER_DECLS%%
 
 const char **hm_op_list() {
