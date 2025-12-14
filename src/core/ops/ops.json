@@ -1,0 +1,11 @@
+{
+  "source": [],
+  "sink": [],
+  "dsp": [
+    {
+      "name": "fir_filter",
+      "file": "filter.c",
+      "params": {"b": "double*", "b_order": "int"}
+    }
+  ]
+}

@@ -31,10 +31,7 @@ set(OP_FILES src/core/ops/dsp/filter.c)
 add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/src/core/ops/ops.h
   ${CMAKE_BINARY_DIR}/src/core/ops/ops_internal.h
   ${CMAKE_BINARY_DIR}/src/core/ops/ops.c
-  DEPENDS src/core/ops/util/gen_ops.py
-    src/core/ops/ops.c.in
-    src/core/ops/ops.h.in
-    src/core/ops/ops_internal.h.in ${OP_FILES}
+  DEPENDS src/core/ops/util/gen_ops.py ${OP_FILES}
   COMMAND python3 util/gen_ops.py -o ${CMAKE_BINARY_DIR}/src/core/ops
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/src/core/ops
   COMMENT "generating ops")
