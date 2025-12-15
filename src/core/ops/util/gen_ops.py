@@ -4,51 +4,51 @@ import os
 import sys
 
 def _gen_wrapper(op_type, op):
-  kwargs_typedef_str = "typedef struct {{ {}; }} {}_kwargs_t;"
-  kwargs_macro_str = "#define __{}_ARGS_UNPACK {}"
+  kwargs_typedef_str = "typedef struct {{ {}; }} {}_{}_kwargs_t;"
+  kwargs_macro_str = "#define __{}_{}_ARGS_UNPACK {}"
   op_wrapper_decl_str = \
     {"source":
-      "int hm_{}(void *dest, unsigned int n_bytes, {});",
+      "int hm_source_{}(void *dest, unsigned int n_bytes, {});",
       "sink":
-      "int hm_{}(void *src, unsigned int n_bytes, {});",
+      "int hm_sink_{}(void *src, unsigned int n_bytes, {});",
       "dsp":
-      "int hm_{}(void *src, void *dest, unsigned int n_bytes, {});"}
+      "int hm_dsp_{}(void *src, void *dest, unsigned int n_bytes, {});"}
   op_wrapper_def_str = \
     {"source":
 """
-int hm_{1}(void *dest, unsigned int n_bytes, {0}) {{
-  {1}_kwargs_t op_args;
+int hm_source_{1}(void *dest, unsigned int n_bytes, {0}) {{
+  {1}_{3}_kwargs_t op_args;
 {2};
-  {1}_impl_impl(dest, n_bytes, &op_args);
+  {1}_source_impl(dest, n_bytes, &op_args);
 }}
 """,
       "sink":
 """
-int hm_{1}(void *src, unsigned int n_bytes, {0}) {{
-  {1}_kwargs_t op_args;
+int hm_sink_{1}(void *src, unsigned int n_bytes, {0}) {{
+  {1}_{3}_kwargs_t op_args;
 {2};
-  {1}_impl(src, n_bytes, &op_args);
+  {1}_sink_impl(src, n_bytes, &op_args);
 }}
 """,
       "dsp":
 """
-int hm_{1}(void *src, void *dest, unsigned int n_bytes, {0}) {{
-  {1}_kwargs_t op_args;
+int hm_dsp_{1}(void *src, void *dest, unsigned int n_bytes, {0}) {{
+  {1}_{3}_kwargs_t op_args;
 {2};
-  {1}_impl(src, dest, n_bytes, &op_args);
+  {1}_dsp_impl(src, dest, n_bytes, &op_args);
 }}
 """}
   op_struct_wrapper_decl_str = \
-    {"source": "hm_source_op* hm_{}_op(hm_format_type output_type, {});",
-     "sink": "hm_source_op* hm_{}_op(hm_format_type input_type, {});",
-     "dsp": "hm_dsp_op* hm_{}_op(hm_format_type input_type, hm_format_type output_type, {});"}
+    {"source": "hm_source_op* hm_source_{}_op(hm_format_type output_type, {});",
+     "sink": "hm_sink_op* hm_sink_{}_op(hm_format_type input_type, {});",
+     "dsp": "hm_dsp_op* hm_dsp_{}_op(hm_format_type input_type, hm_format_type output_type, {});"}
   op_struct_wrapper_def_str = \
     {"source":
 """
-hm_source_op* hm_{0}_op(hm_format_type output_type, {1}) {{
-  {0}_kwargs_t* op_args = malloc(sizeof({0}_kwargs_t));
+hm_source_op* hm_source_{0}_op(hm_format_type output_type, {1}) {{
+  {0}_source_kwargs_t* op_args = malloc(sizeof({0}_source_kwargs_t));
   hm_source_op* new_op = (hm_source_op*)malloc(sizeof(hm_source_op));
-  new_op->op_fn = {0}_impl;
+  new_op->op_fn = {0}_source_impl;
   new_op->output_type = output_type;
 {2}
   new_op->kwargs = (void*)op_args;
@@ -57,10 +57,10 @@ hm_source_op* hm_{0}_op(hm_format_type output_type, {1}) {{
 """,
      "sink":
 """
-hm_sink_op* hm_{0}_op(hm_format_type input_type, {1}) {{
-  {0}_kwargs_t* op_args = malloc(sizeof({0}_kwargs_t));
+hm_sink_op* hm_sink_{0}_op(hm_format_type input_type, {1}) {{
+  {0}_sink_kwargs_t* op_args = malloc(sizeof({0}_sink_kwargs_t));
   hm_sink_op* new_op = (hm_sink_op*)malloc(sizeof(hm_sink_op));
-  new_op->op_fn = {0}_impl;
+  new_op->op_fn = {0}_sink_impl;
   new_op->input_type = input_type;
 {2}
   new_op->kwargs = (void*)op_args;
@@ -69,10 +69,10 @@ hm_sink_op* hm_{0}_op(hm_format_type input_type, {1}) {{
 """,
      "dsp":
 """
-hm_dsp_op* hm_{0}_op(hm_format_type input_type, hm_format_type output_type, {1}) {{
-  {0}_kwargs_t* op_args = malloc(sizeof({0}_kwargs_t));
+hm_dsp_op* hm_dsp_{0}_op(hm_format_type input_type, hm_format_type output_type, {1}) {{
+  {0}_dsp_kwargs_t* op_args = malloc(sizeof({0}_dsp_kwargs_t));
   hm_dsp_op* new_op = (hm_dsp_op*)malloc(sizeof(hm_dsp_op));
-  new_op->op_fn = {0}_impl;
+  new_op->op_fn = {0}_dsp_impl;
   new_op->input_type = input_type;
   new_op->output_type = output_type;
 {2}
@@ -81,33 +81,48 @@ hm_dsp_op* hm_{0}_op(hm_format_type input_type, hm_format_type output_type, {1})
 }}
 """,}
   op_impl_decl_str =\
-    {"source": "int {}_impl(void* dest, unsigned int n_bytes, void* kwargs);",
-     "sink": "int {}_impl(void* src, unsigned int n_bytes, void* kwargs);",
-     "dsp": "int {}_impl(void* src, void* dest, unsigned int n_bytes, void* kwargs);"}
+    {"source": "int {}_{}_impl(void* dest, unsigned int n_bytes, void* kwargs);",
+     "sink": "int {}_{}_impl(void* src, unsigned int n_bytes, void* kwargs);",
+     "dsp": "int {}_{}_impl(void* src, void* dest, unsigned int n_bytes, void* kwargs);"}
 
-  op_param_list = '; '.join(
-    ["{} {}".format(param_type, param_name) for param_name, param_type in op["params"].items()]
-  )
-  kwargs_typedef = kwargs_typedef_str.format(op_param_list, op["name"])
-  kwargs_macro_def = '; '.join(
-    ["{0} {1} = (({2}_kwargs_t*)kwargs)->{1}".format(op["params"][param_name], 
-      param_name, op["name"]) for param_name in op["params"].keys()]
-  )
-  kwargs_macro_def += ';\n'
+  if "params" in op.keys() and op["params"]:
+    op_param_list = '; '.join(
+      ["{} {}".format(param_type, param_name) for param_name, param_type in op["params"].items()]
+    )
+    kwargs_typedef = kwargs_typedef_str.format(op_param_list, op["name"], op_type)
+    kwargs_macro_def = '; '.join(
+      ["{0} {1} = (({2}_{3}_kwargs_t*)kwargs)->{1}".format(op["params"][param_name],
+      param_name, op["name"], op_type) for param_name in op["params"].keys()]
+    )
+    kwargs_macro_def += ';\n'
+    op_wrapper_kwargs_fill = "\n".join(
+      ["  op_args.{0} = {0};".format(param) for param in op["params"].keys()]
+    )
+  else:
+    op_param_list = ''
+    kwargs_typedef = 'typedef struct {{}} {}_{}_kwargs_t;'.format(op["name"], op_type)
+    kwargs_macro_def = ''
+    op_wrapper_kwargs_fill = ''
+  
   op_wrapper_decl = op_wrapper_decl_str[op_type].format(op["name"], op_param_list.replace(';', ','))
-  op_wrapper_kwargs_fill = "\n".join(
-    ["  op_args.{0} = {0};".format(param) for param in op["params"].keys()]
-  )
-  new_impl_decl = op_impl_decl_str[op_type].format(op["name"])
+  new_impl_decl = op_impl_decl_str[op_type].format(op["name"], op_type)
 
   op_wrapper = {}
-  op_wrapper["kwargs_macro_def"] = kwargs_macro_str.format(op["name"].upper(), kwargs_macro_def)
+  op_wrapper["kwargs_macro_def"] = kwargs_macro_str.format(op_type.upper(), op["name"].upper(), kwargs_macro_def)
   op_wrapper["kwargs_typedef"] = kwargs_typedef
   op_wrapper["op_wrapper_decl"] = op_wrapper_decl
-  op_wrapper["op_wrapper_def"] = op_wrapper_def_str[op_type].format(op_param_list.replace(';', ','), op["name"], op_wrapper_kwargs_fill)
+  op_wrapper["op_wrapper_def"] = op_wrapper_def_str[op_type].format(op_param_list.replace(';', ','), op["name"], op_wrapper_kwargs_fill, op_type)
   op_wrapper["op_struct_wrapper_decl"] = op_struct_wrapper_decl_str[op_type].format(op["name"], op_param_list.replace(';', ','))
   op_wrapper["op_struct_wrapper_def"] = op_struct_wrapper_def_str[op_type].format(op["name"], op_param_list.replace(';', ','), op_wrapper_kwargs_fill.replace('.', '->'))
   op_wrapper["impl_decl"] = new_impl_decl
+
+  if not ("params" in op.keys() and op["params"]):
+    #op_wrapper["kwargs_macro_def"] = ''
+    op_wrapper["op_wrapper_def"] = op_wrapper["op_wrapper_def"].replace(', ) {', ') {')
+    op_wrapper["op_wrapper_decl"] = op_wrapper["op_wrapper_decl"].replace(', );', ');')
+    op_wrapper["op_struct_wrapper_def"] = op_wrapper["op_struct_wrapper_def"].replace(', ) {', ') {')
+    op_wrapper["op_struct_wrapper_decl"] = op_wrapper["op_struct_wrapper_decl"].replace(', );', ');')
+
   return op_wrapper
 
 def gen_op_wrappers(ops_file, dry_run, out_dir):
@@ -137,7 +152,9 @@ typedef struct hm_source_op hm_source_op;
 typedef struct hm_sink_op hm_sink_op;
 typedef struct hm_dsp_op hm_dsp_op;
 
-const char **hm_op_list();
+const char **hm_source_list();
+const char **hm_sink_list();
+const char **hm_dsp_list();
 int hm_op_run(hm_dsp_op *op, double *src, double *dest, unsigned int n_bytes);
 int hm_op_delete(hm_dsp_op *op);
 
@@ -153,9 +170,9 @@ int hm_op_delete(hm_dsp_op *op);
 
 #include "ops.h"
 
-#define SOURCE_OP(name) int name ##_impl(void* dest, unsigned int n_bytes, void *kwargs)
-#define SINK_OP(name) int name ##_impl(void* src, unsigned int n_bytes, void *kwargs)
-#define DSP_OP(name) int name ##_impl(void* src, void* dest, unsigned int n_bytes, void *kwargs)
+#define SOURCE_OP(name) int name ##_source_impl(void* dest, unsigned int n_bytes, void *kwargs)
+#define SINK_OP(name) int name ##_sink_impl(void* src, unsigned int n_bytes, void *kwargs)
+#define DSP_OP(name) int name ##_dsp_impl(void* src, void* dest, unsigned int n_bytes, void *kwargs)
 
 typedef int (source_op_fn)(void*, unsigned int, void*);
 typedef int (sink_op_fn)(void*, unsigned int, void*);
@@ -247,20 +264,28 @@ struct hm_dsp_op {
   ops_c_file.write(op_name_list_str)
   ops_c_file.write(
 """
-int hm_op_run(hm_dsp_op *op, double *src, double *dest, unsigned int n_bytes) {
+int hm_op_run(hm_dsp_op *op, double *src, double *dest, unsigned int n_bytes) {{
   return (op->op_fn)(src, dest, n_bytes, op->kwargs);
-}
+}}
 
-int hm_op_delete(hm_dsp_op *op) {
+int hm_op_delete(hm_dsp_op *op) {{
   free(op->kwargs);
   free(op);
   return 0;
-}
+}}
 
-const char **hm_op_list() {
+const char **hm_source_list() {{
   return ops_list;
-}
-""")
+}}
+
+const char **hm_sink_list() {{
+  return ops_list + {};
+}}
+
+const char **hm_dsp_list() {{
+  return ops_list + {};
+}}
+""".format(len(ops["source"])+1, len(ops["source"]) + len(ops["sink"]) + 2))
   
   ops_h_file.seek(0)
   ops_internal_h_file.seek(0)

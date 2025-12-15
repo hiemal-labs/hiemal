@@ -16,11 +16,28 @@ int main() {
     backend_list++;
   }
   printf("\n");
-  const char **ops_list = hm_op_list();
+  const char **ops_list = hm_source_list();
   printf("ops:\n");
+  
+  printf("  source:\n");
   while (*ops_list != NULL) {
-    printf("  %s\n", *ops_list);
+    printf("    %s\n", *ops_list);
     ops_list++;
   }
+
+  ops_list = hm_sink_list();
+  printf("  sink:\n");
+  while (*ops_list != NULL) {
+    printf("    %s\n", *ops_list);
+    ops_list++;
+  }
+
+  ops_list = hm_dsp_list();
+  printf("  dsp:\n");
+  while (*ops_list != NULL) {
+    printf("    %s\n", *ops_list);
+    ops_list++;
+  }
+
   return 0;
 }

@@ -32,6 +32,6 @@ struct backend_info {
   backend_io_connect_fn *io_connect_fn;
 };
 
-const struct backend_info *get_backend_by_name(char *name);
+const struct backend_info *get_backend_by_name(const char *name);
 
 #endif

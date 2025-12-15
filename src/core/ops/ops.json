@@ -1,10 +1,19 @@
 {
-  "source": [],
-  "sink": [],
+  "source": [
+    {
+      "name": "io_device",
+      "params": {"backend_name": "const char*"}
+    }
+  ],
+  "sink": [
+    {
+      "name": "io_device",
+      "params": {"backend_name": "const char*"}
+    }
+  ],
   "dsp": [
     {
       "name": "fir_filter",
-      "file": "filter.c",
       "params": {"b": "double*", "b_order": "int"}
     }
   ]

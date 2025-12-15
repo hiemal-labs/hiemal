@@ -25,7 +25,7 @@ static const char* backend_names[] = {
   NULL
 };
 
-const struct backend_info *get_backend_by_name(char *name) {
+const struct backend_info *get_backend_by_name(const char *name) {
   unsigned int n_backends = sizeof(available_backends) / sizeof(struct backend_info);
   int i = 0;
   for (i = 0; i < n_backends; i++) {
@@ -36,7 +36,7 @@ const struct backend_info *get_backend_by_name(char *name) {
   return NULL;
 }
 
-int hm_backend_init(char *name, hm_backend_connection_t **backend_ptr) {
+int hm_backend_init(const char *name, hm_backend_connection_t **backend_ptr) {
   const struct backend_info *info = get_backend_by_name(name);
   if (info == NULL) {
     *backend_ptr = NULL;

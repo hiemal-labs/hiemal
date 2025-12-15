@@ -27,11 +27,16 @@ endif()
 
 
 # command for running ops codegen script
-set(OP_FILES src/core/ops/dsp/filter.c)
+set(OP_FILES src/core/ops/dsp/filter.c
+  src/core/ops/source/io_device.c
+  src/core/ops/sink/io_device.c
+  )
 add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/src/core/ops/ops.h
   ${CMAKE_BINARY_DIR}/src/core/ops/ops_internal.h
   ${CMAKE_BINARY_DIR}/src/core/ops/ops.c
-  DEPENDS src/core/ops/util/gen_ops.py ${OP_FILES}
+  DEPENDS src/core/ops/util/gen_ops.py
+    src/core/ops/ops.json
+    ${OP_FILES}
   COMMAND python3 util/gen_ops.py -o ${CMAKE_BINARY_DIR}/src/core/ops
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/src/core/ops
   COMMENT "generating ops")

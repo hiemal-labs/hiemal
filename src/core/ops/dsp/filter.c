@@ -6,7 +6,7 @@
 #include "ops_internal.h"
 
 DSP_OP(fir_filter) {
-  __FIR_FILTER_ARGS_UNPACK
+  __DSP_FIR_FILTER_ARGS_UNPACK
   double *_src = (double*)src;
   double *_dest = (double*)dest;
   unsigned int n_samples = n_bytes / sizeof(double);
