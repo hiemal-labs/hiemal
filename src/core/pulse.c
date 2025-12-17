@@ -123,6 +123,7 @@ int _hm_pulse_io_write(pa_stream *s, pa_threaded_mainloop *m, buffer_t *buf, uns
   void *pa_buf_itr = pa_buf;
   int buf_size = buffer_read(buf, pa_buf, n_bytes);
   if (buf_size < n_bytes) n_bytes = buf_size;
+  int bytes_written = 0;
   while (n_bytes > 0) {
     pa_threaded_mainloop_wait(m);
     size_t writable_bytes = pa_stream_writable_size(s);
@@ -130,10 +131,11 @@ int _hm_pulse_io_write(pa_stream *s, pa_threaded_mainloop *m, buffer_t *buf, uns
     pa_stream_write(s, pa_buf_itr, writable_bytes, NULL, 0, PA_SEEK_RELATIVE);
     n_bytes -= writable_bytes;
     pa_buf_itr += writable_bytes;
+    bytes_written += writable_bytes;
   }
   free(pa_buf);
   pa_threaded_mainloop_unlock(m);
-  return 0;
+  return bytes_written;
 }
 
 // externally-managed io device connection
@@ -159,6 +161,7 @@ int _hm_pulse_io_read(pa_stream *s, pa_threaded_mainloop *m, buffer_t *buf, unsi
   if (buf_size < n_bytes) n_bytes = buf_size;
   const void *pa_buf = NULL;
   size_t n_bytes_read = 0;
+  int total_bytes_read = 0;
   while (n_bytes > 0) {
     pa_threaded_mainloop_wait(m);
     pa_stream_peek(s, &pa_buf, &n_bytes_read);
@@ -167,9 +170,10 @@ int _hm_pulse_io_read(pa_stream *s, pa_threaded_mainloop *m, buffer_t *buf, unsi
     n_bytes -= n_bytes_read;
     pa_buf = NULL;
     pa_stream_drop(s);
+    total_bytes_read += n_bytes_read;
   }
   pa_threaded_mainloop_unlock(m);
-  return 0;
+  return total_bytes_read;
 }
 
 // externally-managed io device connection
