@@ -5,8 +5,16 @@
 
 #include "ops_internal.h"
 
+DSP_OP_INIT_FN(fir_filter) {
+  return 0;
+}
+
+DSP_OP_FINI_FN(fir_filter) {
+  return 0;
+}
+
 DSP_OP(fir_filter) {
-  __DSP_FIR_FILTER_ARGS_UNPACK
+  __DSP_FIR_FILTER_ARGS_UNPACK(kwargs)
   double *_src = (double*)src;
   double *_dest = (double*)dest;
   unsigned int n_samples = n_bytes / sizeof(double);
