@@ -13,7 +13,8 @@ target_sources(hiemal PRIVATE
   device.c
   backend.c
   common.c
-  thread.c)
+  thread.c
+  stream.c)
 
 add_subdirectory(ops)
 
@@ -41,6 +42,7 @@ set(HIEMAL_PUBLIC_INCLUDE
   "include/api/buffer.h"
   "include/api/device.h"
   "include/api/recording.h"
+  "include/api/stream.h"
   "${CMAKE_BINARY_DIR}/src/core/ops/ops.h")
 
 set_target_properties(hiemal PROPERTIES PUBLIC_HEADER "${HIEMAL_PUBLIC_INCLUDE}")

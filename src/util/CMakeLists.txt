@@ -6,4 +6,5 @@ target_sources(hmutil PRIVATE
   args.c
   str.c
   file.c
-  unicode.c)
+  unicode.c
+  time.c)
