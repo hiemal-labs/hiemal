@@ -107,11 +107,11 @@ hm_dsp_op* hm_dsp_{0}_op(hm_format_type input_type, hm_format_type output_type, 
 """,}
   op_impl_decl_str =\
     {"source": "int {0}_{1}_impl(void* dest, unsigned int n_bytes, void* kwargs, void* state);\n"
-      "int {0}_bytes_readable(hm_source_op *source_op);\n"
+      "int {0}_bytes_readable(hm_source_op *source_op, size_t *bytes_readable);\n"
       "int {0}_source_init(void* state, void* kwargs);\n"
       "int {0}_source_fini(void* state, void* kwargs);",
      "sink": "int {0}_{1}_impl(void* src, unsigned int n_bytes, void* kwargs, void* state);\n"
-      "int {0}_bytes_writable(hm_sink_op *sink_op);\n"
+      "int {0}_bytes_writable(hm_sink_op *sink_op, size_t *bytes_writable);\n"
       "int {0}_sink_init(void* state, void* kwargs);\n"
       "int {0}_sink_fini(void* state, void* kwargs);",
      "dsp": "int {0}_{1}_impl(void* src, void* dest, unsigned int n_bytes, void* kwargs, void* state);\n"
@@ -217,8 +217,8 @@ int hm_source_op_delete(hm_source_op *op);
 int hm_sink_op_delete(hm_sink_op *op);
 int hm_dsp_op_delete(hm_dsp_op *op);
 
-int hm_op_source_bytes_readable(hm_source_op* source_op);
-int hm_op_sink_bytes_writable(hm_sink_op* sink_op);
+int hm_op_source_bytes_readable(hm_source_op* source_op, size_t *bytes_readable);
+int hm_op_sink_bytes_writable(hm_sink_op* sink_op, size_t *bytes_writable);
 
 """)
   ops_h_file.seek(0, os.SEEK_END)
@@ -235,9 +235,9 @@ int hm_op_sink_bytes_writable(hm_sink_op* sink_op);
 #include "ops.h"
 
 #define SOURCE_OP(name) int name ##_source_impl(void* dest, unsigned int n_bytes, void *kwargs, void *state)
-#define SOURCE_BYTES_READABLE_FN(name) int name ##_bytes_readable(hm_source_op *src_op)
+#define SOURCE_BYTES_READABLE_FN(name) int name ##_bytes_readable(hm_source_op *src_op, size_t *bytes_readable)
 #define SINK_OP(name) int name ##_sink_impl(void* src, unsigned int n_bytes, void *kwargs, void *state)
-#define SINK_BYTES_WRITABLE_FN(name) int name ##_bytes_writable(hm_sink_op *sink_op)
+#define SINK_BYTES_WRITABLE_FN(name) int name ##_bytes_writable(hm_sink_op *sink_op, size_t *bytes_writable)
 #define DSP_OP(name) int name ##_dsp_impl(void* src, void* dest, unsigned int n_bytes, void *kwargs, void *state)
 #define SOURCE_OP_INIT_FN(name) int name ##_source_init(void* state, void* kwargs)
 #define SINK_OP_INIT_FN(name) int name ##_sink_init(void* state, void* kwargs)
@@ -247,9 +247,9 @@ int hm_op_sink_bytes_writable(hm_sink_op* sink_op);
 #define DSP_OP_FINI_FN(name) int name ##_dsp_fini(void* state, void* kwargs)
 
 typedef int (source_op_fn)(void*, unsigned int, void*, void*);
-typedef int (source_bytes_readable_fn)(hm_source_op*);
+typedef int (source_bytes_readable_fn)(hm_source_op*, size_t*);
 typedef int (sink_op_fn)(void*, unsigned int, void*, void*);
-typedef int (sink_bytes_writable_fn)(hm_sink_op*);
+typedef int (sink_bytes_writable_fn)(hm_sink_op*, size_t*);
 typedef int (dsp_op_fn)(void*, void*, unsigned int, void*, void*);
 typedef int (op_state_init_fn)(void*, void*);
 typedef int (op_state_fini_fn)(void*, void*);
@@ -360,6 +360,14 @@ struct hm_dsp_op {
   ops_c_file.write(op_name_list_str)
   ops_c_file.write(
 """
+int hm_op_source_bytes_readable(hm_source_op* source_op, size_t *bytes_readable) {{
+  return (source_op->bytes_readable_fn)(source_op, bytes_readable);
+}}
+
+int hm_op_sink_bytes_writable(hm_sink_op* sink_op, size_t *bytes_writable) {{
+  return (sink_op->bytes_writable_fn)(sink_op, bytes_writable);
+}}
+
 int hm_source_op_run(hm_source_op *op, double *dest, unsigned int n_bytes) {{
   return (op->op_fn)(dest, n_bytes, op->kwargs, op->state);
 }}

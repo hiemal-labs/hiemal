@@ -133,8 +133,11 @@ int _hm_pulse_io_write(pa_stream *s, pa_threaded_mainloop *m, buffer_t *buf, uns
   if (buf_size < n_bytes) n_bytes = buf_size;
   int bytes_written = 0;
   while (n_bytes > 0) {
-    pa_threaded_mainloop_wait(m);
     size_t writable_bytes = pa_stream_writable_size(s);
+    while (writable_bytes == 0) {
+      pa_threaded_mainloop_wait(m);
+      writable_bytes = pa_stream_writable_size(s);
+    }
     if (writable_bytes > n_bytes) writable_bytes = n_bytes;
     pa_stream_write(s, pa_buf_itr, writable_bytes, NULL, 0, PA_SEEK_RELATIVE);
     n_bytes -= writable_bytes;
