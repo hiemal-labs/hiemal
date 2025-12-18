@@ -88,6 +88,14 @@ int io_list_to_array(struct hm_pulse_io_list *l, hm_backend_connection_t *pulse_
   return 0;
 }
 
+void _hm_pulse_stream_state_cb(pa_stream *s, void* userdata) {
+  pa_threaded_mainloop *m = (pa_threaded_mainloop*)userdata;
+  pa_stream_state_t state = pa_stream_get_state(s);
+  if (state == PA_STREAM_READY || state == PA_STREAM_TERMINATED || state == PA_STREAM_FAILED) {
+    pa_threaded_mainloop_signal(m, 0);
+  }
+}
+
 void _hm_pulse_context_state_cb(pa_context *c, void *userdata) {
   pa_threaded_mainloop *m = (pa_threaded_mainloop*)userdata;
   pa_context_state_t state = pa_context_get_state(c);
@@ -328,6 +336,30 @@ int hm_pulse_connection_init(hm_backend_connection_t **pulse_backend) {
   return 0;
 }
 
+size_t hm_pulse_bytes_readable(hm_device_io_connection_t *io) {
+  hm_pulse_handle_t *pulse_handle = (hm_pulse_handle_t*)(io->backend_handle);
+  pa_threaded_mainloop_lock(pulse_handle->mainloop);
+  pa_stream *s = (pa_stream*)(io->backend_dev_io_handle);
+  while (pa_stream_get_state(s) != PA_STREAM_READY) {
+    pa_threaded_mainloop_wait(pulse_handle->mainloop);
+  }
+  size_t bytes_available = pa_stream_readable_size(s);
+  pa_threaded_mainloop_unlock(pulse_handle->mainloop);
+  return bytes_available;
+}
+
+size_t hm_pulse_bytes_writable(hm_device_io_connection_t *io) {
+  hm_pulse_handle_t *pulse_handle = (hm_pulse_handle_t*)(io->backend_handle);
+  pa_threaded_mainloop_lock(pulse_handle->mainloop);
+  pa_stream *s = (pa_stream*)(io->backend_dev_io_handle);
+  while (pa_stream_get_state(s) != PA_STREAM_READY) {
+    pa_threaded_mainloop_wait(pulse_handle->mainloop);
+  }
+  size_t bytes_available = pa_stream_writable_size(s);
+  pa_threaded_mainloop_unlock(pulse_handle->mainloop);
+  return bytes_available;
+}
+
 int hm_pulse_io_connect_by_id(hm_device_io_connection_t **io, hm_backend_connection_t *pulse_backend, unsigned int id) {
   struct hm_pulse_io_node *io_node_itr = ((struct hm_pulse_io_list*)(pulse_backend->dev_io_list))->head;
   int i = 0;
@@ -345,12 +377,15 @@ int hm_pulse_io_connect_by_id(hm_device_io_connection_t **io, hm_backend_connect
       pa_stream_connect_record(new_stream, io_node_itr->io_device->name, NULL, 0);
       pa_stream_set_read_callback(new_stream, _hm_pulse_read_cb,(void*)pulse_handle);
   }
+  pa_stream_set_state_callback(new_stream, _hm_pulse_stream_state_cb, pulse_handle->mainloop);
   *io = (hm_device_io_connection_t*)malloc(sizeof(hm_device_io_connection_t));
   (*io)->backend_dev_io_handle = (void*)new_stream;
   (*io)->backend_handle = (void*)pulse_handle;
   (*io)->type = io_node_itr->io_device->type;
   (*io)->read_fn = hm_pulse_io_read_ext;
   (*io)->write_fn = hm_pulse_io_write_ext;
+  (*io)->bytes_readable_fn = hm_pulse_bytes_readable;
+  (*io)->bytes_writable_fn = hm_pulse_bytes_writable;
   return 0;
 }
 

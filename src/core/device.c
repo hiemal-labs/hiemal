@@ -40,3 +40,21 @@ int device_io_read_ext(hm_device_io_connection_t *io, buffer_t *buf, unsigned in
 int device_io_write_ext(hm_device_io_connection_t *io, buffer_t *buf, unsigned int n_bytes) {
   return (io->write_fn)(io, buf, n_bytes);
 }
+
+int device_io_bytes_readable(hm_device_io_connection_t *io, size_t *bytes) {
+  if (io->type != RECORDING) {
+    return -1;
+  }
+  if (bytes != NULL) {
+   *bytes = (io->bytes_readable_fn)(io);
+  }
+}
+
+int device_io_bytes_writable(hm_device_io_connection_t *io, size_t *bytes) {
+  if (io->type != PLAYBACK) {
+    return -1;
+  }
+  if (bytes != NULL) {
+    *bytes = (io->bytes_writable_fn)(io);
+  }
+}

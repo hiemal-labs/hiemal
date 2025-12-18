@@ -1,6 +1,8 @@
 #ifndef _DEVICE_H
 #define _DEVICE_H
 
+#include <stddef.h>
+
 #include "backend.h"
 
 typedef struct _hm_device hm_device_t;
@@ -19,4 +21,7 @@ int device_io_read(hm_device_io_t *io, buffer_t *buf, unsigned int n_bytes);
 int device_io_write(hm_device_io_t *io, buffer_t *buf, unsigned int n_bytes);
 int device_io_read_ext(hm_device_io_connection_t *io, buffer_t *buf, unsigned int n_bytes);
 int device_io_write_ext(hm_device_io_connection_t *io, buffer_t *buf, unsigned int n_bytes);
+int device_io_bytes_readable(hm_device_io_connection_t *io, size_t *bytes);
+int device_io_bytes_writable(hm_device_io_connection_t *io, size_t *bytes);
+
 #endif
