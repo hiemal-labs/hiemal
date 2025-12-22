@@ -105,6 +105,8 @@ endif()
 
 set(WITH_UTILS "OFF" CACHE BOOL "Build hiemal utilities")
 
+set(WITH_ENVVARS "ON" CACHE BOOL "Enable environment variables")
+
 set(RESOURCE_FILES ${CMAKE_BINARY_DIR}/pkgconfig/hiemal.pc)
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/include)
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/pkgconfig)

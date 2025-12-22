@@ -5,7 +5,7 @@
 #define LOG_LVL_WARN 2
 #define LOG_LVL_INFO 3
 #define LOG_LVL_DEBUG 4
-#define LOG_LVL_VERBOSE 5
+#define LOG_LVL_TRACE 5
 
 extern unsigned int log_level;
 
@@ -16,6 +16,6 @@ int hm_log_err(const char *msg, const char *fn_name);
 int hm_log_warn(const char *msg, const char *fn_name);
 int hm_log_info(const char *msg, const char *fn_name);
 int hm_log_debug(const char *msg, const char *fn_name);
-int hm_log_verbose(const char *msg, const char *fn_name);
+int hm_log_trace(const char *msg, const char *fn_name);
 
 #endif
