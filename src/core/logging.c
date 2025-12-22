@@ -11,7 +11,6 @@ unsigned int log_level = LOG_LVL_WARN;
 #ifdef _MSC_VER
 #include <stdbool.h>
 static bool _loglvl_env_checked = false;
-int _check_loglvl_env
 #define strcasecmp _stricmp
 #else
 int _check_loglvl_env() __attribute__ ((constructor));
@@ -19,6 +18,9 @@ int _check_loglvl_env() __attribute__ ((constructor));
 
 int _check_loglvl_env() {
   const char *hm_loglvl_env = getenv("HM_LOGLVL");
+  if (hm_loglvl_env == NULL) {
+    goto finish;
+  }
   if ((strcasecmp(hm_loglvl_env, "error") == 0) || (strcasecmp(hm_loglvl_env, "1") == 0)) {
     hm_set_loglvl(LOG_LVL_ERR);
   }
@@ -34,6 +36,7 @@ int _check_loglvl_env() {
   else if ((strcasecmp(hm_loglvl_env, "trace") == 0) || (strcasecmp(hm_loglvl_env, "5") == 0)) {
     hm_set_loglvl(LOG_LVL_TRACE);
   }
+  finish:
 #if defined(_MSC_VER)
   _loglvl_env_checked = true;
 #endif
