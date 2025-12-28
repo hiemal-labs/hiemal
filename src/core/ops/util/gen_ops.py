@@ -20,33 +20,36 @@ def _gen_wrapper(op_type, op):
 """
 int hm_source_{1}(void *dest, unsigned int n_bytes, {0}) {{
   {1}_{3}_kwargs_t op_args;
-{2};
+{2}
   {1}_{3}_state_t op_state;
   {1}_{3}_init(&op_state, &op_args);
-  return {1}_source_impl(dest, n_bytes, &op_args, &op_state);
+  int rc = {1}_source_impl(dest, n_bytes, &op_args, &op_state);
   {1}_{3}_fini(&op_state, &op_args);
+  return rc;
 }}
 """,
       "sink":
 """
 int hm_sink_{1}(void *src, unsigned int n_bytes, {0}) {{
   {1}_{3}_kwargs_t op_args;
-{2};
+{2}
   {1}_{3}_state_t op_state;
   {1}_{3}_init(&op_state, &op_args);
-  return {1}_sink_impl(src, n_bytes, &op_args, &op_state);
+  int rc = {1}_sink_impl(src, n_bytes, &op_args, &op_state);
   {1}_{3}_fini(&op_state, &op_args);
+  return rc;
 }}
 """,
       "dsp":
 """
 int hm_dsp_{1}(void *src, void *dest, unsigned int n_bytes, {0}) {{
   {1}_{3}_kwargs_t op_args;
-{2};
+{2}
   {1}_{3}_state_t op_state;
   {1}_{3}_init(&op_state, &op_args);
-  return {1}_dsp_impl(src, dest, n_bytes, &op_args, &op_state);
+  int rc = {1}_dsp_impl(src, dest, n_bytes, &op_args, &op_state);
   {1}_{3}_fini(&op_state, &op_args);
+  return rc;
 }}
 """}
   op_struct_wrapper_decl_str = \
@@ -195,6 +198,8 @@ def gen_op_wrappers(ops_file, dry_run, out_dir):
 #ifndef HIEMAL_OPS_H
 #define HIEMAL_OPS_H
 
+#include <stddef.h>
+
 typedef enum {
   S16LE_I=1,
   S16LE_N,
@@ -229,6 +234,8 @@ int hm_op_sink_bytes_writable(hm_sink_op* sink_op, size_t *bytes_writable);
 
 #ifndef HIEMAL_OPS_INTERNAL_H
 #define HIEMAL_OPS_INTERNAL_H
+
+#include <stdio.h>
 
 #include "api/backend.h"
 #include "api/device.h"

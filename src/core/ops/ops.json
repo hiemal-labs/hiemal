@@ -4,6 +4,11 @@
       "name": "io_device",
       "params": {"backend_name": "const char*"},
       "state": {"backend": "hm_backend_connection_t*", "src_connection": "hm_device_io_connection_t*"}
+    },
+    {
+      "name": "file",
+      "params": {"filename": "const char*"},
+      "state": {"fp": "FILE*"}
     }
   ],
   "sink": [
@@ -11,6 +16,11 @@
       "name": "io_device",
       "params": {"backend_name": "const char*"},
       "state": {"backend": "hm_backend_connection_t*", "dest_connection": "hm_device_io_connection_t*"}
+    },
+    {
+      "name": "file",
+      "params": {"filename": "const char*"},
+      "state": {"fp": "FILE*"}
     }
   ],
   "dsp": [

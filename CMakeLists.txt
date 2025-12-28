@@ -29,7 +29,9 @@ endif()
 # command for running ops codegen script
 set(OP_FILES src/core/ops/dsp/filter.c
   src/core/ops/source/io_device.c
+  src/core/ops/source/file.c
   src/core/ops/sink/io_device.c
+  src/core/ops/sink/file.c
   )
 add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/src/core/ops/ops.h
   ${CMAKE_BINARY_DIR}/src/core/ops/ops_internal.h
