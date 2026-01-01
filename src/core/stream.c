@@ -49,7 +49,7 @@ int hm_stream_delete(hm_stream** stream) {
 }
 
 int hm_stream_run(hm_stream *stream, unsigned int msec) {
-  hm_time_ms_t start_time = get_current_time();
+  hm_time_ms_t start_time = get_current_time_ms();
   hm_source_op *src = stream->src;
   hm_dsp_op *dsp = stream->dsp;
   hm_sink_op *dest = stream->sink;
