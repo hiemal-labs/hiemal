@@ -207,4 +207,4 @@ void *xmemcpy(void *dest, const void *src, size_t n);
 int hm_error_unimplemented(const char *fn_name);
 int hm_error_unreachable(const char *fn_name);
 
-int hm_warning_unreachable(const char *fn_name);
+int hm_warn_unimplemented(const char *fn_name);
