@@ -8,6 +8,7 @@
 
 #include "cmake_info.h"
 #include "error.h"
+#include "intern/logging.h"
 
 #ifdef _MSC_VER
 #define __restrict__ __restrict
@@ -202,3 +203,8 @@ int xasprintf(char **str, char *fmt, ...)
 int xvsprintf(char *str, const char *fmt, va_list args);
 void *xmemcpy(void *dest, const void *src, size_t n);
 #endif
+
+int hm_error_unimplemented(const char *fn_name);
+int hm_error_unreachable(const char *fn_name);
+
+int hm_warning_unreachable(const char *fn_name);
