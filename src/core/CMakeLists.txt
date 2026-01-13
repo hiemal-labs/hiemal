@@ -1,7 +1,7 @@
 
 target_include_directories(hiemal PUBLIC include)
-target_sources(hiemal PRIVATE 
-  fmt.c
+target_sources(hiemal PRIVATE
+  format.c
   error.c
   backend.c
   buffer.c

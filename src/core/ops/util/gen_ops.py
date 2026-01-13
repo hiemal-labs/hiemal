@@ -200,13 +200,7 @@ def gen_op_wrappers(ops_file, dry_run, out_dir):
 
 #include <stddef.h>
 
-typedef enum {
-  S16LE_I=1,
-  S16LE_N,
-  F16LE_I,
-  F16LE_N,
-  DEFAULT_FORMAT
-} hm_format_type;
+#include "intern/format.h"
 
 typedef struct hm_source_op hm_source_op;
 typedef struct hm_sink_op hm_sink_op;

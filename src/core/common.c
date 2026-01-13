@@ -524,16 +524,15 @@ void *xmemcpy(void *dest, const void *src, size_t n) {
 }
 
 int hm_error_unimplemented(const char *fn_name) {
-  return hm_log_err("unimplemented", fn_name);
+  hm_log_err("unimplemented", fn_name);
   exit(1);
 }
 
 int hm_warn_unimplemented(const char *fn_name) {
   return hm_log_warn("unimplemented", fn_name);
-  exit(1);
 }
 
 int hm_error_unreachable(const char *fn_name) {
-  return hm_log_err("reached section marked as unreachable, creating core dump", fn_name);
+  hm_log_err("reached section marked as unreachable, creating core dump", fn_name);
   abort();
 }
