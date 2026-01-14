@@ -78,3 +78,15 @@ size_t hm_format_convert(void *src, hm_format_signature *src_format, void *dest,
   }
   return n_bytes_written;
 }
+
+size_t hm_format_convert_bytes_available(hm_format_type src_format, hm_format_type dest_format, size_t n_bytes) {
+  float byte_conversion_rate = hm_bytes_per_sample(dest_format) / hm_bytes_per_sample(src_format);
+  return (size_t)(n_bytes * byte_conversion_rate);
+}
+
+bool hm_format_signature_equal(hm_format_signature *a, hm_format_signature *b) {
+  return (a->sample_format == b->sample_format) &&
+         (a->interleaved == b->interleaved) &&
+         (a->n_channels == b->n_channels) &&
+         (a->sample_format == b->sample_format);
+}

@@ -1,8 +1,10 @@
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #include "ops_internal.h"
 #include "util/time.h"
+#include "intern/format.h"
 
 #include "api/stream.h"
 
@@ -62,18 +64,57 @@ int hm_stream_run(hm_stream *stream, unsigned int msec) {
     
     if (dsp == NULL) {
       void *buf = calloc(bytes_available, 1);
+      void *tmp_buf = calloc(bytes_available, 1);
       hm_source_op_run(src, buf, bytes_available);
+      if (src->output_type.sample_format != dest->input_type.sample_format) {
+        size_t converted_bytes = hm_format_convert_bytes_available(src->output_type.sample_format, dest->input_type.sample_format, bytes_available);
+        if (converted_bytes > bytes_available) {
+          tmp_buf = realloc(tmp_buf, converted_bytes);
+          buf = realloc(buf, converted_bytes);
+        }
+        hm_format_convert(buf, &(src->output_type), tmp_buf, &(dest->input_type), bytes_available);
+        memcpy(buf, tmp_buf, converted_bytes);
+        bytes_available = converted_bytes;
+      }
+      
       hm_sink_op_run(dest, buf, bytes_available);
+      
       free(buf);
+      free(tmp_buf);
     }
     else {
-      void *src_buf = calloc(bytes_available, 1);
-      void *dest_buf = calloc(bytes_available, 1);
-      hm_source_op_run(src, src_buf, bytes_available);
-      hm_dsp_op_run(dsp, src_buf, dest_buf, bytes_available);
-      hm_sink_op_run(dest, dest_buf, bytes_available);
-      free(src_buf);
-      free(dest_buf);
+      void *buf = calloc(bytes_available, 1);
+      void *tmp_buf = calloc(bytes_available, 1);
+      hm_source_op_run(src, buf, bytes_available);
+      if (src->output_type.sample_format != dsp->input_type.sample_format) {
+        size_t converted_bytes = hm_format_convert_bytes_available(src->output_type.sample_format, dsp->input_type.sample_format, bytes_available);
+        if (converted_bytes > bytes_available) {
+          tmp_buf = realloc(tmp_buf, converted_bytes);
+          buf = realloc(buf, converted_bytes);
+        }
+        hm_format_convert(buf, &(src->output_type), tmp_buf, &(dsp->input_type), bytes_available);
+        memcpy(buf, tmp_buf, converted_bytes);
+        bytes_available = converted_bytes;
+      }
+      
+      hm_dsp_op_run(dsp, buf, tmp_buf, bytes_available);
+      if (dsp->output_type.sample_format != dest->input_type.sample_format) {
+        size_t converted_bytes = hm_format_convert_bytes_available(dsp->output_type.sample_format, dest->input_type.sample_format, bytes_available);
+        if (converted_bytes > bytes_available) {
+          tmp_buf = realloc(tmp_buf, converted_bytes);
+          buf = realloc(buf, converted_bytes);
+        }
+        hm_format_convert(tmp_buf, &(src->output_type), buf, &(dsp->input_type), bytes_available);
+        bytes_available = converted_bytes;
+      }
+      else {
+        memcpy(buf, tmp_buf, bytes_available);
+      }
+
+      hm_sink_op_run(dest, buf, bytes_available);
+      
+      free(buf);
+      free(tmp_buf);
     }
     sleep_ms(1);
     elapsed_time = elapsed_time_ms(&start_time);

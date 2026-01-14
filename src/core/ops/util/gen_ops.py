@@ -53,13 +53,13 @@ int hm_dsp_{1}(void *src, void *dest, unsigned int n_bytes, {0}) {{
 }}
 """}
   op_struct_wrapper_decl_str = \
-    {"source": "hm_source_op* hm_source_{}_op(hm_format_type output_type, {});",
-     "sink": "hm_sink_op* hm_sink_{}_op(hm_format_type input_type, {});",
-     "dsp": "hm_dsp_op* hm_dsp_{}_op(hm_format_type input_type, hm_format_type output_type, {});"}
+    {"source": "hm_source_op* hm_source_{}_op(hm_format_signature output_type, {});",
+     "sink": "hm_sink_op* hm_sink_{}_op(hm_format_signature input_type, {});",
+     "dsp": "hm_dsp_op* hm_dsp_{}_op(hm_format_signature input_type, hm_format_signature output_type, {});"}
   op_struct_wrapper_def_str = \
     {"source":
 """
-hm_source_op* hm_source_{0}_op(hm_format_type output_type, {1}) {{
+hm_source_op* hm_source_{0}_op(hm_format_signature output_type, {1}) {{
   {0}_source_kwargs_t* op_args = malloc(sizeof({0}_source_kwargs_t));
   hm_source_op* new_op = (hm_source_op*)malloc(sizeof(hm_source_op));
   new_op->op_fn = {0}_source_impl;
@@ -76,7 +76,7 @@ hm_source_op* hm_source_{0}_op(hm_format_type output_type, {1}) {{
 """,
      "sink":
 """
-hm_sink_op* hm_sink_{0}_op(hm_format_type input_type, {1}) {{
+hm_sink_op* hm_sink_{0}_op(hm_format_signature input_type, {1}) {{
   {0}_sink_kwargs_t* op_args = malloc(sizeof({0}_sink_kwargs_t));
   hm_sink_op* new_op = (hm_sink_op*)malloc(sizeof(hm_sink_op));
   new_op->op_fn = {0}_sink_impl;
@@ -93,7 +93,7 @@ hm_sink_op* hm_sink_{0}_op(hm_format_type input_type, {1}) {{
 """,
      "dsp":
 """
-hm_dsp_op* hm_dsp_{0}_op(hm_format_type input_type, hm_format_type output_type, {1}) {{
+hm_dsp_op* hm_dsp_{0}_op(hm_format_signature input_type, hm_format_signature output_type, {1}) {{
   {0}_dsp_kwargs_t* op_args = malloc(sizeof({0}_dsp_kwargs_t));
   hm_dsp_op* new_op = (hm_dsp_op*)malloc(sizeof(hm_dsp_op));
   new_op->op_fn = {0}_dsp_impl;
@@ -260,7 +260,7 @@ struct hm_source_op {
   source_bytes_readable_fn *bytes_readable_fn;
   op_state_init_fn *init;
   op_state_fini_fn *fini;
-  hm_format_type output_type;
+  hm_format_signature output_type;
   void *kwargs;
   void *state;
 };
@@ -270,7 +270,7 @@ struct hm_sink_op {
   sink_bytes_writable_fn *bytes_writable_fn;
   op_state_init_fn *init;
   op_state_fini_fn *fini;
-  hm_format_type input_type;
+  hm_format_signature input_type;
   void *kwargs;
   void *state;
 };
@@ -279,8 +279,8 @@ struct hm_dsp_op {
   dsp_op_fn *op_fn;
   op_state_init_fn *init;
   op_state_fini_fn *fini;
-  hm_format_type input_type;
-  hm_format_type output_type;
+  hm_format_signature input_type;
+  hm_format_signature output_type;
   void *kwargs;
   void *state;
 };
