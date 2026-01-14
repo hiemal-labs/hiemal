@@ -25,7 +25,7 @@ TEST(fir_filter_op) {
   // test result using hm_op_run
   {
   double filtered_signal[6] = {0};
-  hm_dsp_op *fir_op = hm_dsp_fir_filter_op(DEFAULT_FORMAT, DEFAULT_FORMAT, b, b_order);
+  hm_dsp_op *fir_op = hm_dsp_fir_filter_op(HM_FORMAT_DEFAULT, HM_FORMAT_DEFAULT, b, b_order);
   int rc = hm_dsp_op_run(fir_op, signal, filtered_signal, n_bytes);
   ASSERT_TRUE(rc == n_bytes);
   ASSERT_ALMOST_EQUAL_1D(filtered_signal, 

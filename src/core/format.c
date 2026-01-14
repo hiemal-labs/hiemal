@@ -4,7 +4,7 @@
 #include "intern/common.h"
 #include "intern/format.h"
 
-
+hm_format_signature HM_FORMAT_DEFAULT = {S16LE, 44100, 1, false};
 
 size_t hm_bytes_per_sample(hm_format_type sample_format) {
   switch (sample_format) {

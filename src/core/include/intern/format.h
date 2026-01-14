@@ -16,6 +16,8 @@ typedef struct {
   bool interleaved;
 } hm_format_signature;
 
+extern hm_format_signature HM_FORMAT_DEFAULT;
+
 size_t hm_format_convert(void *src, hm_format_signature *src_format, void *dest, hm_format_signature *dest_format, size_t n_bytes);
 size_t hm_format_convert_bytes_available(hm_format_type src_format, hm_format_type dest_format, size_t n_bytes);
 bool hm_format_signature_equal(hm_format_signature *a, hm_format_signature *b);
