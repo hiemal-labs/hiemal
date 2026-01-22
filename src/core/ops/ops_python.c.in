@@ -1,0 +1,12 @@
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
+static PyModuleDef hm_ops_module_def = {
+  .m_base = PyModuleDef_HEAD_INIT,
+  .m_name = "hiemal.ops"
+};
+
+PyMODINIT_FUNC PyInit_hiemal_ops() {
+  PyObject *m = PyModule_Create(&hm_ops_module_def);
+  return m;
+}

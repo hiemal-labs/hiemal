@@ -39,7 +39,7 @@ add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/src/core/ops/ops.h
   DEPENDS src/core/ops/util/gen_ops.py
     src/core/ops/ops.json
     ${OP_FILES}
-  COMMAND python3 util/gen_ops.py -o ${CMAKE_BINARY_DIR}/src/core/ops
+  COMMAND python3 util/gen_ops.py -o ${CMAKE_BINARY_DIR}/src/core/ops -t ${CMAKE_SOURCE_DIR}/src/core/ops
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/src/core/ops
   COMMENT "generating ops")
 

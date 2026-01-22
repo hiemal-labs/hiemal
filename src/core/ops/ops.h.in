@@ -1,0 +1,43 @@
+#ifndef HIEMAL_OPS_H
+#define HIEMAL_OPS_H
+
+#include <stddef.h>
+
+#include "intern/format.h"
+
+typedef struct hm_source_op hm_source_op;
+typedef struct hm_sink_op hm_sink_op;
+typedef struct hm_dsp_op hm_dsp_op;
+
+const char **hm_source_list();
+const char **hm_sink_list();
+const char **hm_dsp_list();
+int hm_source_op_run(hm_source_op *op, double *dest, unsigned int n_bytes);
+int hm_sink_op_run(hm_sink_op *op, double *src, unsigned int n_bytes);
+int hm_dsp_op_run(hm_dsp_op *op, double *src, double *dest, unsigned int n_bytes);
+int hm_source_op_delete(hm_source_op *op);
+int hm_sink_op_delete(hm_sink_op *op);
+int hm_dsp_op_delete(hm_dsp_op *op);
+
+int hm_op_source_bytes_readable(hm_source_op* source_op, size_t *bytes_readable);
+int hm_op_sink_bytes_writable(hm_sink_op* sink_op, size_t *bytes_writable);
+
+// source
+
+%%SOURCE_OP_DECL%%
+
+%%SOURCE_OP_DECL_STRUCT%%
+
+// sink
+
+%%SINK_OP_DECL%%
+
+%%SINK_OP_DECL_STRUCT%%
+
+// dsp
+
+%%DSP_OP_DECL%%
+
+%%DSP_OP_DECL_STRUCT%%
+
+#endif

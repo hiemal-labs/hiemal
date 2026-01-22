@@ -1,0 +1,76 @@
+#include <stdlib.h>
+
+#include "ops_internal.h"
+
+%%SOURCE_OP_WRAPPER_DEF%%
+%%SOURCE_OP_STRUCT_WRAPPER_DEF%%
+
+%%SINK_OP_WRAPPER_DEF%%
+%%SINK_OP_STRUCT_WRAPPER_DEF%%
+
+%%DSP_OP_WRAPPER_DEF%%
+%%DSP_OP_STRUCT_WRAPPER_DEF%%
+
+%%OP_NAME_LIST_STR%%
+
+int hm_op_source_bytes_readable(hm_source_op* source_op, size_t *bytes_readable) {
+  return (source_op->bytes_readable_fn)(source_op, bytes_readable);
+}
+
+int hm_op_sink_bytes_writable(hm_sink_op* sink_op, size_t *bytes_writable) {
+  return (sink_op->bytes_writable_fn)(sink_op, bytes_writable);
+}
+
+int hm_source_op_run(hm_source_op *op, double *dest, unsigned int n_bytes) {
+  return (op->op_fn)(dest, n_bytes, op->kwargs, op->state);
+}
+
+int hm_sink_op_run(hm_sink_op *op, double *src, unsigned int n_bytes) {
+  return (op->op_fn)(src, n_bytes, op->kwargs, op->state);
+}
+
+int hm_dsp_op_run(hm_dsp_op *op, double *src, double *dest, unsigned int n_bytes) {
+  return (op->op_fn)(src, dest, n_bytes, op->kwargs, op->state);
+}
+
+int hm_source_op_delete(hm_source_op *op) {
+  (op->fini)(op->state, op->kwargs);
+  if (op->state) {
+    free(op->state);
+  }
+  free(op->kwargs);
+  free(op);
+  return 0;
+}
+
+int hm_sink_op_delete(hm_sink_op *op) {
+  (op->fini)(op->state, op->kwargs);
+  if (op->state) {
+    free(op->state);
+  }
+  free(op->kwargs);
+  free(op);
+  return 0;
+}
+
+int hm_dsp_op_delete(hm_dsp_op *op) {
+  (op->fini)(op->state, op->kwargs);
+  if (op->state) {
+    free(op->state);
+  }
+  free(op->kwargs);
+  free(op);
+  return 0;
+}
+
+const char **hm_source_list() {
+  return ops_list;
+}
+
+const char **hm_sink_list() {
+  return ops_list + %%SINK_LIST_START%%;
+}
+
+const char **hm_dsp_list() {
+  return ops_list + %%DSP_LIST_START%%;
+}

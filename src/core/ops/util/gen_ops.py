@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import io
 import json
 import os
@@ -183,121 +185,15 @@ hm_dsp_op* hm_dsp_{0}_op(hm_format_signature input_type, hm_format_signature out
 
   return op_wrapper
 
-def gen_op_wrappers(ops_file, dry_run, out_dir):
+def gen_op_wrappers(ops_file, dry_run, out_dir, template_dir, gen_py_ops):
   if isinstance(out_dir, list):
     out_dir = out_dir[0]
+  if isinstance(template_dir, list):
+    template_dir = template_dir[0]
   if (out_dir != None) and (out_dir[-1] != '/'):
     out_dir += '/'
   with open(ops_file, 'r') as f:
     ops = json.load(f)
-
-  ops_h_file = io.StringIO(
-"""\
-// This file was generated automatically with util/gen_ops.py
-
-#ifndef HIEMAL_OPS_H
-#define HIEMAL_OPS_H
-
-#include <stddef.h>
-
-#include "intern/format.h"
-
-typedef struct hm_source_op hm_source_op;
-typedef struct hm_sink_op hm_sink_op;
-typedef struct hm_dsp_op hm_dsp_op;
-
-const char **hm_source_list();
-const char **hm_sink_list();
-const char **hm_dsp_list();
-int hm_source_op_run(hm_source_op *op, double *dest, unsigned int n_bytes);
-int hm_sink_op_run(hm_sink_op *op, double *src, unsigned int n_bytes);
-int hm_dsp_op_run(hm_dsp_op *op, double *src, double *dest, unsigned int n_bytes);
-int hm_source_op_delete(hm_source_op *op);
-int hm_sink_op_delete(hm_sink_op *op);
-int hm_dsp_op_delete(hm_dsp_op *op);
-
-int hm_op_source_bytes_readable(hm_source_op* source_op, size_t *bytes_readable);
-int hm_op_sink_bytes_writable(hm_sink_op* sink_op, size_t *bytes_writable);
-
-""")
-  ops_h_file.seek(0, os.SEEK_END)
-
-  ops_internal_h_file = io.StringIO(
-"""\
-// This file was generated automatically with util/gen_ops.py
-
-#ifndef HIEMAL_OPS_INTERNAL_H
-#define HIEMAL_OPS_INTERNAL_H
-
-#include <stdio.h>
-
-#include "api/backend.h"
-#include "api/device.h"
-#include "ops.h"
-
-#define SOURCE_OP(name) int name ##_source_impl(void* dest, unsigned int n_bytes, void *kwargs, void *state)
-#define SOURCE_BYTES_READABLE_FN(name) int name ##_bytes_readable(hm_source_op *src_op, size_t *bytes_readable)
-#define SINK_OP(name) int name ##_sink_impl(void* src, unsigned int n_bytes, void *kwargs, void *state)
-#define SINK_BYTES_WRITABLE_FN(name) int name ##_bytes_writable(hm_sink_op *sink_op, size_t *bytes_writable)
-#define DSP_OP(name) int name ##_dsp_impl(void* src, void* dest, unsigned int n_bytes, void *kwargs, void *state)
-#define SOURCE_OP_INIT_FN(name) int name ##_source_init(void* state, void* kwargs)
-#define SINK_OP_INIT_FN(name) int name ##_sink_init(void* state, void* kwargs)
-#define DSP_OP_INIT_FN(name) int name ##_dsp_init(void* state, void* kwargs)
-#define SOURCE_OP_FINI_FN(name) int name ##_source_fini(void* state, void* kwargs)
-#define SINK_OP_FINI_FN(name) int name ##_sink_fini(void* state, void* kwargs)
-#define DSP_OP_FINI_FN(name) int name ##_dsp_fini(void* state, void* kwargs)
-
-typedef int (source_op_fn)(void*, unsigned int, void*, void*);
-typedef int (source_bytes_readable_fn)(hm_source_op*, size_t*);
-typedef int (sink_op_fn)(void*, unsigned int, void*, void*);
-typedef int (sink_bytes_writable_fn)(hm_sink_op*, size_t*);
-typedef int (dsp_op_fn)(void*, void*, unsigned int, void*, void*);
-typedef int (op_state_init_fn)(void*, void*);
-typedef int (op_state_fini_fn)(void*, void*);
-
-struct hm_source_op {
-  source_op_fn *op_fn;
-  source_bytes_readable_fn *bytes_readable_fn;
-  op_state_init_fn *init;
-  op_state_fini_fn *fini;
-  hm_format_signature output_type;
-  void *kwargs;
-  void *state;
-};
-
-struct hm_sink_op {
-  sink_op_fn *op_fn;
-  sink_bytes_writable_fn *bytes_writable_fn;
-  op_state_init_fn *init;
-  op_state_fini_fn *fini;
-  hm_format_signature input_type;
-  void *kwargs;
-  void *state;
-};
-
-struct hm_dsp_op {
-  dsp_op_fn *op_fn;
-  op_state_init_fn *init;
-  op_state_fini_fn *fini;
-  hm_format_signature input_type;
-  hm_format_signature output_type;
-  void *kwargs;
-  void *state;
-};
-
-""")
-  ops_internal_h_file.seek(0, os.SEEK_END)
-
-  ops_c_file = io.StringIO(
-"""\
-// This file was generated automatically with util/gen_ops.py
-
-#include <stdlib.h>
-
-#include "ops_internal.h"
-
-""")
-  ops_c_file.seek(0, os.SEEK_END)
 
   kwargs_typedef_dict = {"source": [], "sink": [], "dsp": []}
   state_typedef_dict = {"source": [], "sink": [], "dsp": []}
@@ -309,7 +205,7 @@ struct hm_dsp_op {
   op_struct_wrapper_def_dict = {"source": [], "sink": [], "dsp": []}
   impl_decl_dict = {"source": [], "sink": [], "dsp": []}
 
-  op_name_list_str = "\nstatic const char* ops_list[{}] = {{\n".format(len(ops["source"]) + len(ops["sink"]) + len(ops["dsp"]) + 3)
+  op_name_list_str = "static const char* ops_list[{}] = {{\n".format(len(ops["source"]) + len(ops["sink"]) + len(ops["dsp"]) + 3)
   for op_type, op_list in ops.items():
     for op in op_list:
       op_name_list_str += '  "{}",\n'.format(op["name"])
@@ -327,103 +223,161 @@ struct hm_dsp_op {
     op_name_list_str += "  NULL,\n"
   op_name_list_str += "};"
 
-  for op_type in ["source", "sink", "dsp"]:
-    ops_h_file.write("// {} \n\n".format(op_type))
-    if op_wrapper_decl_dict[op_type]:
-      ops_h_file.write("\n".join(op_wrapper_decl_dict[op_type]))
-      ops_h_file.write("\n\n")
-    if op_struct_wrapper_decl_dict[op_type]:
-      ops_h_file.write("\n".join(op_struct_wrapper_decl_dict[op_type]))
-      ops_h_file.write("\n\n")
+  # ops.h
+  ops_h_file = io.StringIO("// This file was generated automatically with util/gen_ops.py\n\n")
+  with open(template_dir + "/ops.h.in", "r") as f:
+    ops_h_str = f.read()\
+                  .replace("%%SOURCE_OP_DECL%%", "\n".join(op_wrapper_decl_dict["source"]))\
+                  .replace("%%SOURCE_OP_DECL_STRUCT%%", "\n".join(op_struct_wrapper_decl_dict["source"]))\
+                  .replace("%%SINK_OP_DECL%%", "\n".join(op_wrapper_decl_dict["sink"]))\
+                  .replace("%%SINK_OP_DECL_STRUCT%%", "\n".join(op_struct_wrapper_decl_dict["sink"]))\
+                  .replace("%%DSP_OP_DECL%%", "\n".join(op_wrapper_decl_dict["dsp"]))\
+                  .replace("%%DSP_OP_DECL_STRUCT%%", "\n".join(op_struct_wrapper_decl_dict["dsp"]))
+    ops_h_file.write(ops_h_str)
+  ops_h_file.seek(0, os.SEEK_END)
 
-    if kwargs_typedef_dict[op_type]:
-      ops_internal_h_file.write("\n".join(kwargs_typedef_dict[op_type]))
-      ops_internal_h_file.write("\n\n")
-    if state_typedef_dict[op_type]:
-      ops_internal_h_file.write("\n".join(state_typedef_dict[op_type]))
-      ops_internal_h_file.write("\n\n")
-    if op_kwargs_macro_def_dict[op_type]:
-      ops_internal_h_file.write("\n".join(op_kwargs_macro_def_dict[op_type]))
-    if op_state_macro_def_dict[op_type]:
-      ops_internal_h_file.write("\n".join(op_state_macro_def_dict[op_type]))
-      ops_internal_h_file.write("\n")
-    if impl_decl_dict[op_type]:
-      ops_internal_h_file.write("\n".join(impl_decl_dict[op_type]))
-      ops_internal_h_file.write("\n\n")
+  # ops_internal.h
+  ops_internal_h_file = io.StringIO("// This file was generated automatically with util/gen_ops.py\n\n")
+  with open(template_dir + "/ops_internal.h.in", "r") as f:
+    ops_internal_h_str = f.read()\
+                  .replace("%%SOURCE_KWARGS_TYPEDEF%%", "\n".join(kwargs_typedef_dict["source"]))\
+                  .replace("%%SOURCE_STATE_TYPEDEF%%", "\n".join(state_typedef_dict["source"]))\
+                  .replace("%%SOURCE_OP_KWARGS_MACRO_DEF%%", "\n".join(op_kwargs_macro_def_dict["source"]))\
+                  .replace("%%SOURCE_OP_STATE_MACRO_DEF%%", "\n".join(op_state_macro_def_dict["source"]))\
+                  .replace("%%SOURCE_IMPL_DECL%%", "\n".join(impl_decl_dict["source"]))\
+                  .replace("%%SINK_KWARGS_TYPEDEF%%", "\n".join(kwargs_typedef_dict["sink"]))\
+                  .replace("%%SINK_STATE_TYPEDEF%%", "\n".join(state_typedef_dict["sink"]))\
+                  .replace("%%SINK_OP_KWARGS_MACRO_DEF%%", "\n".join(op_kwargs_macro_def_dict["sink"]))\
+                  .replace("%%SINK_OP_STATE_MACRO_DEF%%", "\n".join(op_state_macro_def_dict["sink"]))\
+                  .replace("%%SINK_IMPL_DECL%%", "\n".join(impl_decl_dict["sink"]))\
+                  .replace("%%DSP_KWARGS_TYPEDEF%%", "\n".join(kwargs_typedef_dict["dsp"]))\
+                  .replace("%%DSP_STATE_TYPEDEF%%", "\n".join(state_typedef_dict["dsp"]))\
+                  .replace("%%DSP_OP_KWARGS_MACRO_DEF%%", "\n".join(op_kwargs_macro_def_dict["dsp"]))\
+                  .replace("%%DSP_OP_STATE_MACRO_DEF%%", "\n".join(op_state_macro_def_dict["dsp"]))\
+                  .replace("%%DSP_IMPL_DECL%%", "\n".join(impl_decl_dict["dsp"]))
+    ops_internal_h_file.write(ops_internal_h_str)
+  ops_internal_h_file.seek(0, os.SEEK_END)
 
-    if op_wrapper_def_dict[op_type]:
-      ops_c_file.write("\n\n".join(op_wrapper_def_dict[op_type]))
-    if op_struct_wrapper_def_dict[op_type]:
-      ops_c_file.write("\n\n".join(op_struct_wrapper_def_dict[op_type]))
+  #ops.c
+  ops_c_file = io.StringIO("// This file was generated automatically with util/gen_ops.py\n\n")
+  with open(template_dir + "/ops.c.in", "r") as f:
+    ops_c_str = f.read()\
+                  .replace("%%SOURCE_OP_WRAPPER_DEF%%", "\n\n".join(op_wrapper_def_dict["source"]))\
+                  .replace("%%SOURCE_OP_STRUCT_WRAPPER_DEF%%", "\n\n".join(op_struct_wrapper_def_dict["source"]))\
+                  .replace("%%SINK_OP_WRAPPER_DEF%%", "\n\n".join(op_wrapper_def_dict["sink"]))\
+                  .replace("%%SINK_OP_STRUCT_WRAPPER_DEF%%", "\n\n".join(op_struct_wrapper_def_dict["sink"]))\
+                  .replace("%%DSP_OP_WRAPPER_DEF%%", "\n\n".join(op_wrapper_def_dict["dsp"]))\
+                  .replace("%%DSP_OP_STRUCT_WRAPPER_DEF%%", "\n\n".join(op_struct_wrapper_def_dict["dsp"]))\
+                  .replace("%%OP_NAME_LIST_STR%%", op_name_list_str)\
+                  .replace("%%SINK_LIST_START%%", str(len(ops["source"])+1))\
+                  .replace("%%DSP_LIST_START%%", str(len(ops["source"]) + len(ops["sink"]) + 2))                  
+    ops_c_file.write(ops_c_str)
+  ops_c_file.seek(0, os.SEEK_END)
 
-  ops_h_file.write("#endif\n")
-  ops_internal_h_file.write("\n#endif\n")
-  ops_c_file.write(op_name_list_str)
-  ops_c_file.write(
-"""
-int hm_op_source_bytes_readable(hm_source_op* source_op, size_t *bytes_readable) {{
-  return (source_op->bytes_readable_fn)(source_op, bytes_readable);
-}}
+  if gen_py_ops:
+    # ops_python.h
+    # ops_python.c
+    pass
 
-int hm_op_sink_bytes_writable(hm_sink_op* sink_op, size_t *bytes_writable) {{
-  return (sink_op->bytes_writable_fn)(sink_op, bytes_writable);
-}}
+  # for op_type in ["source", "sink", "dsp"]:
+  #   ops_h_file.write("// {} \n\n".format(op_type))
+  #   if op_wrapper_decl_dict[op_type]:
+  #     ops_h_file.write("\n".join(op_wrapper_decl_dict[op_type]))
+  #     ops_h_file.write("\n\n")
+  #   if op_struct_wrapper_decl_dict[op_type]:
+  #     ops_h_file.write("\n".join(op_struct_wrapper_decl_dict[op_type]))
+  #     ops_h_file.write("\n\n")
 
-int hm_source_op_run(hm_source_op *op, double *dest, unsigned int n_bytes) {{
-  return (op->op_fn)(dest, n_bytes, op->kwargs, op->state);
-}}
+  #   if kwargs_typedef_dict[op_type]:
+  #     ops_internal_h_file.write("\n".join(kwargs_typedef_dict[op_type]))
+  #     ops_internal_h_file.write("\n\n")
+  #   if state_typedef_dict[op_type]:
+  #     ops_internal_h_file.write("\n".join(state_typedef_dict[op_type]))
+  #     ops_internal_h_file.write("\n\n")
+  #   if op_kwargs_macro_def_dict[op_type]:
+  #     ops_internal_h_file.write("\n".join(op_kwargs_macro_def_dict[op_type]))
+  #   if op_state_macro_def_dict[op_type]:
+  #     ops_internal_h_file.write("\n".join(op_state_macro_def_dict[op_type]))
+  #     ops_internal_h_file.write("\n")
+  #   if impl_decl_dict[op_type]:
+  #     ops_internal_h_file.write("\n".join(impl_decl_dict[op_type]))
+  #     ops_internal_h_file.write("\n\n")
 
-int hm_sink_op_run(hm_sink_op *op, double *src, unsigned int n_bytes) {{
-  return (op->op_fn)(src, n_bytes, op->kwargs, op->state);
-}}
+  #   if op_wrapper_def_dict[op_type]:
+  #     ops_c_file.write("\n\n".join(op_wrapper_def_dict[op_type]))
+  #   if op_struct_wrapper_def_dict[op_type]:
+  #     ops_c_file.write("\n\n".join(op_struct_wrapper_def_dict[op_type]))
 
-int hm_dsp_op_run(hm_dsp_op *op, double *src, double *dest, unsigned int n_bytes) {{
-  return (op->op_fn)(src, dest, n_bytes, op->kwargs, op->state);
-}}
+#   ops_h_file.write("#endif\n")
+#   ops_internal_h_file.write("\n#endif\n")
+#   ops_c_file.write(op_name_list_str)
+#   ops_c_file.write(
+# """
+# int hm_op_source_bytes_readable(hm_source_op* source_op, size_t *bytes_readable) {{
+#   return (source_op->bytes_readable_fn)(source_op, bytes_readable);
+# }}
 
-int hm_source_op_delete(hm_source_op *op) {{
-  (op->fini)(op->state, op->kwargs);
-  if (op->state) {{
-    free(op->state);
-  }}
-  free(op->kwargs);
-  free(op);
-  return 0;
-}}
+# int hm_op_sink_bytes_writable(hm_sink_op* sink_op, size_t *bytes_writable) {{
+#   return (sink_op->bytes_writable_fn)(sink_op, bytes_writable);
+# }}
 
-int hm_sink_op_delete(hm_sink_op *op) {{
-  (op->fini)(op->state, op->kwargs);
-  if (op->state) {{
-    free(op->state);
-  }}
-  free(op->kwargs);
-  free(op);
-  return 0;
-}}
+# int hm_source_op_run(hm_source_op *op, double *dest, unsigned int n_bytes) {{
+#   return (op->op_fn)(dest, n_bytes, op->kwargs, op->state);
+# }}
 
-int hm_dsp_op_delete(hm_dsp_op *op) {{
-  (op->fini)(op->state, op->kwargs);
-  if (op->state) {{
-    free(op->state);
-  }}
-  free(op->kwargs);
-  free(op);
-  return 0;
-}}
+# int hm_sink_op_run(hm_sink_op *op, double *src, unsigned int n_bytes) {{
+#   return (op->op_fn)(src, n_bytes, op->kwargs, op->state);
+# }}
 
-const char **hm_source_list() {{
-  return ops_list;
-}}
+# int hm_dsp_op_run(hm_dsp_op *op, double *src, double *dest, unsigned int n_bytes) {{
+#   return (op->op_fn)(src, dest, n_bytes, op->kwargs, op->state);
+# }}
 
-const char **hm_sink_list() {{
-  return ops_list + {};
-}}
+# int hm_source_op_delete(hm_source_op *op) {{
+#   (op->fini)(op->state, op->kwargs);
+#   if (op->state) {{
+#     free(op->state);
+#   }}
+#   free(op->kwargs);
+#   free(op);
+#   return 0;
+# }}
 
-const char **hm_dsp_list() {{
-  return ops_list + {};
-}}
-""".format(len(ops["source"])+1, len(ops["source"]) + len(ops["sink"]) + 2))
-  
+# int hm_sink_op_delete(hm_sink_op *op) {{
+#   (op->fini)(op->state, op->kwargs);
+#   if (op->state) {{
+#     free(op->state);
+#   }}
+#   free(op->kwargs);
+#   free(op);
+#   return 0;
+# }}
+
+# int hm_dsp_op_delete(hm_dsp_op *op) {{
+#   (op->fini)(op->state, op->kwargs);
+#   if (op->state) {{
+#     free(op->state);
+#   }}
+#   free(op->kwargs);
+#   free(op);
+#   return 0;
+# }}
+
+# const char **hm_source_list() {{
+#   return ops_list;
+# }}
+
+# const char **hm_sink_list() {{
+#   return ops_list + {};
+# }}
+
+# const char **hm_dsp_list() {{
+#   return ops_list + {};
+# }}
+# """.format(len(ops["source"])+1, len(ops["source"]) + len(ops["sink"]) + 2))
+
+
+
   ops_h_file.seek(0)
   ops_internal_h_file.seek(0)
   ops_c_file.seek(0)
@@ -452,5 +406,7 @@ if __name__ == "__main__":
   parser.add_argument('-d', '--dry-run', action='store_true')
   parser.add_argument('-i', '--ops-file', default='ops.json', action='store', nargs=1)
   parser.add_argument('-o', '--out-dir', action='store', nargs=1)
+  parser.add_argument('-t', '--template-dir', action='store', nargs=1)
+  parser.add_argument('--python', action='store_true')
   args = parser.parse_args(sys.argv[1:])
-  gen_op_wrappers(args.ops_file, args.dry_run, args.out_dir)
+  gen_op_wrappers(args.ops_file, args.dry_run, args.out_dir, args.template_dir, args.python)

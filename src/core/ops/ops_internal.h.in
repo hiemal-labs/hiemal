@@ -1,0 +1,84 @@
+#ifndef HIEMAL_OPS_INTERNAL_H
+#define HIEMAL_OPS_INTERNAL_H
+
+#include <stdio.h>
+
+#include "api/backend.h"
+#include "api/device.h"
+#include "ops.h"
+
+#define SOURCE_OP(name) int name ##_source_impl(void* dest, unsigned int n_bytes, void *kwargs, void *state)
+#define SOURCE_BYTES_READABLE_FN(name) int name ##_bytes_readable(hm_source_op *src_op, size_t *bytes_readable)
+#define SINK_OP(name) int name ##_sink_impl(void* src, unsigned int n_bytes, void *kwargs, void *state)
+#define SINK_BYTES_WRITABLE_FN(name) int name ##_bytes_writable(hm_sink_op *sink_op, size_t *bytes_writable)
+#define DSP_OP(name) int name ##_dsp_impl(void* src, void* dest, unsigned int n_bytes, void *kwargs, void *state)
+#define SOURCE_OP_INIT_FN(name) int name ##_source_init(void* state, void* kwargs)
+#define SINK_OP_INIT_FN(name) int name ##_sink_init(void* state, void* kwargs)
+#define DSP_OP_INIT_FN(name) int name ##_dsp_init(void* state, void* kwargs)
+#define SOURCE_OP_FINI_FN(name) int name ##_source_fini(void* state, void* kwargs)
+#define SINK_OP_FINI_FN(name) int name ##_sink_fini(void* state, void* kwargs)
+#define DSP_OP_FINI_FN(name) int name ##_dsp_fini(void* state, void* kwargs)
+
+typedef int (source_op_fn)(void*, unsigned int, void*, void*);
+typedef int (source_bytes_readable_fn)(hm_source_op*, size_t*);
+typedef int (sink_op_fn)(void*, unsigned int, void*, void*);
+typedef int (sink_bytes_writable_fn)(hm_sink_op*, size_t*);
+typedef int (dsp_op_fn)(void*, void*, unsigned int, void*, void*);
+typedef int (op_state_init_fn)(void*, void*);
+typedef int (op_state_fini_fn)(void*, void*);
+
+struct hm_source_op {
+  source_op_fn *op_fn;
+  source_bytes_readable_fn *bytes_readable_fn;
+  op_state_init_fn *init;
+  op_state_fini_fn *fini;
+  hm_format_signature output_type;
+  void *kwargs;
+  void *state;
+};
+
+struct hm_sink_op {
+  sink_op_fn *op_fn;
+  sink_bytes_writable_fn *bytes_writable_fn;
+  op_state_init_fn *init;
+  op_state_fini_fn *fini;
+  hm_format_signature input_type;
+  void *kwargs;
+  void *state;
+};
+
+struct hm_dsp_op {
+  dsp_op_fn *op_fn;
+  op_state_init_fn *init;
+  op_state_fini_fn *fini;
+  hm_format_signature input_type;
+  hm_format_signature output_type;
+  void *kwargs;
+  void *state;
+};
+
+%%SOURCE_KWARGS_TYPEDEF%%
+
+%%SOURCE_STATE_TYPEDEF%%
+
+%%SOURCE_OP_KWARGS_MACRO_DEF%%
+%%SOURCE_OP_STATE_MACRO_DEF%%
+%%SOURCE_IMPL_DECL%%
+
+%%SINK_KWARGS_TYPEDEF%%
+
+%%SINK_STATE_TYPEDEF%%
+
+%%SINK_OP_KWARGS_MACRO_DEF%%
+%%SINK_OP_STATE_MACRO_DEF%%
+%%SINK_IMPL_DECL%%
+
+%%DSP_KWARGS_TYPEDEF%%
+
+%%DSP_STATE_TYPEDEF%%
+
+%%DSP_OP_KWARGS_MACRO_DEF%%
+%%DSP_OP_STATE_MACRO_DEF%%
+%%DSP_IMPL_DECL%%
+
+#endif
