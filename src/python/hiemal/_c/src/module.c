@@ -4,7 +4,9 @@ static int hm_c_module_exec(PyObject *m) {
   add_format_types(m);
 
   PyObject *all = PyObject_Vectorcall((PyObject*)&PyList_Type, NULL, 0, NULL);
-  PyList_Append(all, PyUnicode_FromString("Signature"));
+  PyObject *signature_str = PyUnicode_FromString("Signature");
+  PyList_Append(all, signature_str);
+  Py_DECREF(signature_str);
   PyModule_Add(m, "__all__", (PyObject*)all);
   return 0;
 }
