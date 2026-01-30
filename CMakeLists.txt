@@ -122,7 +122,9 @@ set_target_properties(hiemal PROPERTIES
 
 add_subdirectory(src/core)
 add_subdirectory(src/util)
-#add_subdirectory(src/python)
+if(WITH_PYTHON)
+  add_subdirectory(src/python)
+endif()
 if(WITH_UTILS)
   add_subdirectory(src/utils)
 endif()

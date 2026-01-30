@@ -1,0 +1,5 @@
+add_library(hm_python_format MODULE)
+set_target_properties(hm_python_format PROPERTIES PREFIX "")
+set_target_properties(hm_python_format PROPERTIES OUTPUT_NAME "format")
+target_include_directories(hm_python_format PRIVATE ${Python_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/src/core/include)
+target_sources(hm_python_format PRIVATE src/format.c)
