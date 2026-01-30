@@ -8,8 +8,12 @@
 #error "Minimum python version is 3.10"
 #endif
 
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include <numpy/arrayobject.h>
+
 #include <stddef.h>
 
 int add_format_types(PyObject *m);
+int add_buffer_types(PyObject *m);
 
 #endif

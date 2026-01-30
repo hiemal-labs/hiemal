@@ -1,7 +1,9 @@
 #include "intern/python.h"
 
 static int hm_c_module_exec(PyObject *m) {
+  import_array1(-1);
   add_format_types(m);
+  add_buffer_types(m);
 
   PyObject *all = PyObject_Vectorcall((PyObject*)&PyList_Type, NULL, 0, NULL);
   PyObject *signature_str = PyUnicode_FromString("Signature");

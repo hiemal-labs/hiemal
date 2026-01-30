@@ -46,5 +46,5 @@ static PyType_Spec hm_format_Signature_spec = {
 
 int add_format_types(PyObject *m) {
   PyTypeObject *Signature_type = (PyTypeObject*)PyType_FromModuleAndSpec(m, &hm_format_Signature_spec, NULL);
-  PyModule_AddType(m, Signature_type);  
+  PyModule_AddType(m, Signature_type);
 }
