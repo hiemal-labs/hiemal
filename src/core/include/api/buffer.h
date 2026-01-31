@@ -39,4 +39,6 @@ int buffer_write(buffer_t *dest, const void *src, unsigned int n_bytes);
 int buffer_read(buffer_t *src, void *dest, unsigned int n_bytes);
 
 int buffer_view(buffer_t *src, void *dest, unsigned int offset, unsigned int n_bytes);
+
+int buffer_size(buffer_t *buf);
 #endif

@@ -46,24 +46,57 @@ void hm_buffer_Buffer_dealloc(struct PyHmBufferObject *self) {
   Py_DECREF(type);
 }
 
+PyObject *hm_buffer_Buffer_get_bytes_readable(struct PyHmBufferObject *self, void*) {
+  buffer_t *buf = self->buf;
+  unsigned int bytes_readable = buffer_n_read_bytes(buf);
+  return PyLong_FromUnsignedLong((unsigned long)bytes_readable);
+}
+
+PyObject *hm_buffer_Buffer_get_bytes_writable(struct PyHmBufferObject *self, void*) {
+  buffer_t *buf = self->buf;
+  unsigned int bytes_writable = buffer_n_write_bytes(buf);
+  return PyLong_FromUnsignedLong((unsigned long)bytes_writable);
+}
+
+PyObject *hm_buffer_Buffer_size(struct PyHmBufferObject *self, void*) {
+  buffer_t *buf = self->buf;
+  unsigned int size = buffer_size(buf);
+  return PyLong_FromUnsignedLong((unsigned long)size);
+}
+
+static PyGetSetDef hm_buffer_Buffer_get_setters[] = {
+  {"bytes_readable", (getter)hm_buffer_Buffer_get_bytes_readable, NULL, NULL, NULL},
+  {"bytes_writable", (getter)hm_buffer_Buffer_get_bytes_writable, NULL, NULL, NULL},
+  {"size", (getter)hm_buffer_Buffer_size, NULL, NULL, NULL},
+  {NULL}
+};
+
 static struct PyMemberDef hm_buffer_Buffer_members[] = {
   {NULL}
 };
 
-PyObject *hm_buffer_Buffer_array(PyObject *self, PyObject*, PyObject *kwargs) {
+PyObject *hm_buffer_Buffer_array(PyObject *self, PyObject*, PyObject*) {
   npy_intp dims[] = {3,3};
   import_array();
   return PyArray_SimpleNew(2, dims, NPY_UINT8);
 }
 
+PyObject *hm_buffer_Buffer_clear(struct PyHmBufferObject *self) {
+  buffer_reset(self->buf);
+  Py_RETURN_NONE;
+}
+
 static struct PyMethodDef hm_buffer_Buffer_methods[] = {
   {"__array__", (PyCFunction)hm_buffer_Buffer_array, METH_VARARGS | METH_KEYWORDS, NULL},
+  {"numpy", (PyCFunction)hm_buffer_Buffer_array, METH_NOARGS, NULL},
+  {"clear", (PyCFunction)hm_buffer_Buffer_clear, METH_NOARGS, NULL},
   {NULL}
 };
 
 static PyType_Slot hm_buffer_Buffer_slots[] = {
   {Py_tp_members, hm_buffer_Buffer_members},
   {Py_tp_methods, hm_buffer_Buffer_methods},
+  {Py_tp_getset, hm_buffer_Buffer_get_setters},
   {Py_tp_init, (initproc)hm_buffer_Buffer_init},
   {Py_tp_dealloc, (destructor)hm_buffer_Buffer_dealloc},
   {0, NULL}

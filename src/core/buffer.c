@@ -527,3 +527,7 @@ int buffer_view(buffer_t *src, void *dest, unsigned int offset, unsigned int n_b
     return n_bytes;
   }
 }
+
+int buffer_size(buffer_t *buf) {
+  return buf->buf_len_bytes;
+}
