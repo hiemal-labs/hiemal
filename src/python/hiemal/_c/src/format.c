@@ -14,7 +14,7 @@ static struct PyMemberDef hm_format_Signature_members[] = {
   {"interleaved",  Py_T_BOOL, offsetof(struct PyHmSignatureObject, sig.interleaved), 0, PyDoc_STR("Whether or not data is interleaved")},
   {NULL}
 };
-
+ 
 PyObject *hm_format_Signature_tp_str(struct PyHmSignatureObject *self) {
   return PyUnicode_FromFormat("Signature(fs=%u, n_channels=%u, interleaved=%s)",
     self->sig.fs, self->sig.n_channels, self->sig.interleaved ? "True" : "False");
