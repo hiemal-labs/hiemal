@@ -83,7 +83,7 @@ PyObject *hm_buffer_Buffer_clear(struct PyHmBufferObject *self) {
 
 PyObject *hm_buffer_Buffer_read(struct PyHmBufferObject *self, PyObject *args) {
   if (PyTuple_GET_SIZE(args) != 1) {
-    PyErr_SetString(PyExc_TypeError, "Buffer.write() expects 2 positional arguments");
+    PyErr_SetString(PyExc_TypeError, "Buffer.read() expects 2 positional arguments");
     return NULL;
   }
   PyObject *read_arg = PyTuple_GET_ITEM(args, 0);
@@ -97,6 +97,27 @@ PyObject *hm_buffer_Buffer_read(struct PyHmBufferObject *self, PyObject *args) {
   ssize_t bytes_read = (bytes_requested < bytes_available)?  bytes_requested : bytes_available;
   char *read_buf = PyMem_Malloc(bytes_read);
   buffer_read(self->buf, read_buf, (int)bytes_read);
+  PyObject *bytes_result = PyBytes_FromStringAndSize(read_buf, bytes_read);
+  PyMem_Free(read_buf);
+  return bytes_result;
+}
+
+PyObject *hm_buffer_Buffer_peek(struct PyHmBufferObject *self, PyObject *args) {
+  if (PyTuple_GET_SIZE(args) != 1) {
+    PyErr_SetString(PyExc_TypeError, "Buffer.peek() expects 2 positional arguments");
+    return NULL;
+  }
+  PyObject *read_arg = PyTuple_GET_ITEM(args, 0);
+  if (!PyNumber_Check(read_arg)) {
+    PyErr_SetString(PyExc_TypeError, "Argument must be a number");
+    return NULL;
+  }
+  ssize_t bytes_requested = PyNumber_AsSsize_t(read_arg, PyExc_OverflowError);
+  ssize_t bytes_available = buffer_n_read_bytes(self->buf);
+  // MIN(bytes_requested, bytes_available)
+  ssize_t bytes_read = (bytes_requested < bytes_available)?  bytes_requested : bytes_available;
+  char *read_buf = PyMem_Malloc(bytes_read);
+  buffer_view(self->buf, read_buf, 0, (int)bytes_read);
   PyObject *bytes_result = PyBytes_FromStringAndSize(read_buf, bytes_read);
   PyMem_Free(read_buf);
   return bytes_result;
@@ -149,6 +170,7 @@ static struct PyMethodDef hm_buffer_Buffer_methods[] = {
   {"numpy", (PyCFunction)hm_buffer_Buffer_array, METH_NOARGS, NULL},
   {"clear", (PyCFunction)hm_buffer_Buffer_clear, METH_NOARGS, NULL},
   {"read", (PyCFunction)hm_buffer_Buffer_read, METH_VARARGS, NULL},
+  {"peek", (PyCFunction)hm_buffer_Buffer_peek, METH_VARARGS, NULL},
   {"write", (PyCFunction)hm_buffer_Buffer_write, METH_VARARGS, NULL},
   {"copy", (PyCFunction)hm_buffer_Buffer_copy, METH_NOARGS, NULL},
   {"convert", (PyCFunction)hm_buffer_Buffer_convert, METH_VARARGS, NULL},
