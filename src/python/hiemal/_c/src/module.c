@@ -1,17 +1,27 @@
 #include "intern/python.h"
 
-static int hm_c_module_exec(PyObject *m) {
-  import_array1(-1);
+static int initialize_types(PyObject *m) {
   add_format_types(m);
   add_buffer_types(m);
   add_backend_types(m);
   add_device_types(m);
-  
+  return 0;  
+}
+
+static int create_all(PyObject *m) {
   PyObject *all = PyObject_Vectorcall((PyObject*)&PyList_Type, NULL, 0, NULL);
   PyObject *signature_str = PyUnicode_FromString("Signature");
   PyList_Append(all, signature_str);
   Py_DECREF(signature_str);
   PyModule_Add(m, "__all__", (PyObject*)all);
+  return 0;
+}
+
+static int hm_c_module_exec(PyObject *m) {
+  import_array1(-1);
+  initialize_types(m);
+  init_backends(m);
+  create_all(m);
   return 0;
 }
 

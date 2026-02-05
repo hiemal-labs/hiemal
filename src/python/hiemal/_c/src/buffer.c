@@ -1,11 +1,6 @@
 #include "intern/python.h"
 
-#include "api/buffer.h"
-
-struct PyHmBufferObject {
-  PyObject_HEAD
-  buffer_t *buf;
-};
+// buffer.Buffer
 
 int hm_buffer_Buffer_init(struct PyHmBufferObject *self, PyObject *args, PyObject *kwargs) {
   if (PyTuple_GET_SIZE(args) != 2) {

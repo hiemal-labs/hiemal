@@ -2,10 +2,6 @@
 
 // device.Device
 
-struct PyHmDeviceObject {
-  PyObject_HEAD
-};
-
 static struct PyMemberDef hm_device_Device_members[] = {
   {NULL}
 };
@@ -22,12 +18,6 @@ static PyType_Spec hm_device_Device_spec = {
 };
 
 // device.DeviceList
-
-struct PyHmDeviceListObject {
-  PyObject_HEAD
-  Py_ssize_t n_items;
-  struct PyHmDeviceObject** devices;
-};
 
 Py_ssize_t hm_device_DeviceList_sq_len(struct PyHmDeviceListObject *self) {
   return self->n_items;
@@ -47,6 +37,7 @@ static struct PyMemberDef hm_device_DeviceList_members[] = {
 
 static PyType_Slot hm_device_DeviceList_slots[] = {
   {Py_sq_length, hm_device_DeviceList_sq_len},
+  {Py_sq_item, hm_device_DeviceList_sq_item},
   {0, NULL}
 };
 

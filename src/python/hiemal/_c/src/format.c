@@ -1,12 +1,6 @@
 #include "intern/python.h"
-#include "intern/format.h"
 
 // format.Signature
-
-struct PyHmSignatureObject {
-  PyObject_HEAD
-  hm_format_signature sig;
-};
 
 static struct PyMemberDef hm_format_Signature_members[] = {
   {"fs",  Py_T_UINT, offsetof(struct PyHmSignatureObject, sig.fs), 0, PyDoc_STR("Sampling frequency")},
