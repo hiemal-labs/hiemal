@@ -125,6 +125,15 @@ PyObject *hm_buffer_Buffer_write(struct PyHmBufferObject *self, PyObject *args) 
   return PyLong_FromSize_t(bytes_written);
 }
 
+PyObject *hm_buffer_Buffer_copy(struct PyHmBufferObject *self) {
+  PyTypeObject *Buffer_type = Py_TYPE(self);
+  PyObject *args = PyTuple_New(0);
+  struct PyHmBufferObject *new_buf = (struct PyHmBufferObject*)(Buffer_type->tp_new(Buffer_type, args, NULL));
+  Py_DECREF(args);
+  buffer_copy(&(new_buf->buf), self->buf);
+  return (PyObject*)new_buf;
+}
+
 PyObject *hm_buffer_Buffer_convert(struct PyHmBufferObject *self, PyObject *args) {
   Py_RETURN_NONE;
 }
@@ -141,6 +150,7 @@ static struct PyMethodDef hm_buffer_Buffer_methods[] = {
   {"clear", (PyCFunction)hm_buffer_Buffer_clear, METH_NOARGS, NULL},
   {"read", (PyCFunction)hm_buffer_Buffer_read, METH_VARARGS, NULL},
   {"write", (PyCFunction)hm_buffer_Buffer_write, METH_VARARGS, NULL},
+  {"copy", (PyCFunction)hm_buffer_Buffer_copy, METH_NOARGS, NULL},
   {"convert", (PyCFunction)hm_buffer_Buffer_convert, METH_VARARGS, NULL},
   {NULL}
 };

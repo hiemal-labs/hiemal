@@ -27,6 +27,7 @@ int buffer_init(buffer_t **buf, unsigned int n_bytes, \
   buffer_type_t type);
 int buffer_init_ext(buffer_t **buf, unsigned int n_bytes, \
   buffer_type_t type, void *raw_buffer);
+int buffer_copy(buffer_t **new_buf, buffer_t *src_buf);
 
 int buffer_add_recording(buffer_t *buf, recording_t *r);
 

@@ -334,6 +334,19 @@ int buffer_init_ext(buffer_t **buf, unsigned int n_bytes, buffer_type_t type, vo
   return 0;
 }
 
+int buffer_copy(buffer_t **new_buf, buffer_t *src_buf) {
+  unsigned int n_bytes = src_buf->buf_len_bytes;
+  buffer_type_t type = src_buf->type;
+  buffer_init(new_buf, n_bytes, type);
+  ssize_t read_pos = src_buf->read_ptr - src_buf->buf;
+  ssize_t write_pos = src_buf->write_ptr - src_buf->buf;
+  memcpy((*new_buf)->buf, src_buf->buf, n_bytes);
+  (*new_buf)->read_ptr = (*new_buf)->buf + read_pos;
+  (*new_buf)->write_ptr = (*new_buf)->buf + write_pos;
+  (*new_buf)->state = src_buf->state;
+  return 0;
+}
+
 #ifdef WITH_PROTOBUF
 int buffer_add_recording(buffer_t *buf, recording_t *r) {
   buf->r_id = hm_recording_n_buffers(r);
